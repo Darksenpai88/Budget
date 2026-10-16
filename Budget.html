@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d0d0d">
-<title>Budget v0.0.1</title>
+<title>Budget v0.0.2</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
@@ -49,12 +49,15 @@
     text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;
   }
 
+  .fresh { text-align:center; color:#3ecf8e; font-size:12.5px; font-weight:600; padding:8px; }
+
   .row { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #2e2e2e; }
   .row:last-child { border-bottom:none; }
   .row .nm { flex:1; font-size:15px; }
   .row .sub { font-size:11px; color:#8a8a8a; margin-top:2px; }
   .row .amt { font-size:15px; font-weight:700; }
   .row .amt.paid { color:#5c5c5c; text-decoration:line-through; font-weight:500; }
+  .row.faded { opacity:.45; }
 
   .check {
     width:26px; height:26px; border-radius:8px; border:2px solid #3a3a3a;
@@ -76,8 +79,8 @@
   .wk .d { text-align:center; padding:10px 2px; border-radius:9px; background:#222; border:1px solid transparent; }
   .wk .d .dn { font-size:9px; color:#5c5c5c; font-weight:700; }
   .wk .d .dd { font-size:15px; font-weight:700; margin-top:3px; }
-  .wk .d.today { border-color:#4d6bfe; }
-  .wk .d.today .dd { color:#4d6bfe; }
+  .wk .d.today { border-color:#3ecf8e; }
+  .wk .d.today .dd { color:#3ecf8e; }
   .wk .d .bd { width:5px; height:5px; border-radius:50%; background:transparent; margin:4px auto 0; }
   .wk .d .bd.on { background:#e0a63a; }
   .wk .d .bd.paid { background:#3ecf8e; }
@@ -98,14 +101,15 @@
   .btn:active { opacity:.85; }
   .btn.ghost { background:#222; border:1px solid #2e2e2e; color:#f2f2f2; font-size:14px; padding:12px; }
   .btn.half { flex:1; }
+  .btn.danger { background:transparent; color:#f0564a; border:1px solid #3a2020; font-size:14px; padding:12px; margin-top:8px; }
 
   .btn-row { display:flex; gap:10px; margin-bottom:12px; }
 
-  input {
+  input, select {
     width:100%; background:#222; border:1px solid #2e2e2e; border-radius:10px;
     padding:14px; color:#f2f2f2; font-family:inherit; font-size:16px; outline:none;
   }
-  input:focus { border-color:#4d6bfe; }
+  input:focus, select:focus { border-color:#4d6bfe; }
   input::placeholder { color:#5c5c5c; }
 
   .amtinput { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
@@ -125,6 +129,21 @@
   .item .val { font-size:15px; font-weight:700; }
   .item .val.in { color:#3ecf8e; }
   .item .del { background:none; border:none; color:#5c5c5c; font-size:20px; cursor:pointer; padding:0 4px; font-family:inherit; }
+
+  .quick-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  .quick-btn {
+    padding:10px 14px; border-radius:12px; border:1px solid #2e2e2e;
+    background:#222; color:#f2f2f2; font-family:inherit; font-size:13.5px;
+    font-weight:600; cursor:pointer; display:flex; align-items:center; gap:7px;
+    transition:all .12s;
+  }
+  .quick-btn:active { transform:scale(.96); }
+  .quick-btn .qd { color:#5c5c5c; font-size:11px; }
+  .quick-add {
+    padding:10px 14px; border-radius:12px; border:1px dashed #3a3a3a;
+    background:transparent; color:#5c5c5c; font-family:inherit; font-size:13.5px;
+    font-weight:600; cursor:pointer;
+  }
 
   .empty { text-align:center; padding:36px 20px; color:#5c5c5c; font-size:13px; line-height:1.6; }
 
@@ -177,22 +196,25 @@
   .sheet .f2 { display:flex; gap:10px; }
   .sheet .f2 > * { flex:1; }
   .sheet .btn { margin-top:8px; }
-  .sheet .danger {
-    width:100%; padding:13px; border-radius:11px; font-family:inherit;
-    font-size:14px; font-weight:700; cursor:pointer; margin-top:8px;
-    background:transparent; color:#f0564a; border:1px solid #3a2020;
-  }
   .mrow2 { display:flex; gap:10px; margin-top:8px; }
   .mrow2 button { flex:1; padding:13px; border-radius:11px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; border:none; }
   .mrow2 .yes { background:#f0564a; color:#fff; }
   .mrow2 .no { background:#222; color:#f2f2f2; border:1px solid #2e2e2e; }
+
+  .daypick { display:flex; gap:6px; flex-wrap:wrap; }
+  .daypick button {
+    flex:1; min-width:60px; padding:11px 6px; border-radius:10px;
+    border:1px solid #2e2e2e; background:#222; color:#f2f2f2;
+    font-family:inherit; font-size:12px; font-weight:600; cursor:pointer;
+  }
+  .daypick button.on { background:#4d6bfe; border-color:#4d6bfe; color:#fff; }
 </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <div><h1>Budget<span class="ver">v0.0.1</span></h1></div>
+    <div><h1>Budget<span class="ver">v0.0.2</span></h1></div>
     <div class="hdr-right" id="hdr">
       <b class="green" id="hdrNum">$100</b><br><span id="hdrLab">left this week</span>
     </div>
@@ -215,6 +237,10 @@
           <div class="bignum green" id="weekNum">$100</div>
           <div class="biglab" id="weekLab">left this week</div>
         </div>
+      </div>
+
+      <div class="card" id="freshCard" style="display:none">
+        <div class="fresh">Fresh week ✅</div>
       </div>
 
       <div class="card">
@@ -288,6 +314,9 @@
     <div class="card flat">
       <div style="padding:16px"><div class="title">Log a purchase</div></div>
       <div style="padding:0 16px 16px">
+        <div id="quickWrap" style="display:none">
+          <div class="quick-row" id="quickRow"></div>
+        </div>
         <div class="amtinput">
           <span class="d">$</span>
           <input type="number" id="amt" inputmode="decimal" placeholder="0.00">
@@ -295,6 +324,7 @@
         <div class="chips" id="chips"></div>
         <input type="text" id="note" placeholder="note (optional)" style="margin-top:12px">
         <button class="btn" id="btnAdd" style="margin-top:12px">➕ Add to log</button>
+        <button class="btn ghost" id="btnQuickAdd" style="margin-top:8px">⭐ Pin a quick button</button>
       </div>
     </div>
 
@@ -317,16 +347,39 @@
     <button class="btn ghost" id="btnSave">💾 Save</button>
   </div>
 
+  <!-- ===== DEBTS ===== -->
+  <div class="view" id="view-debts">
+    <div class="card flat">
+      <div class="big">
+        <div class="bignum" id="debtTotal">$0</div>
+        <div class="biglab">total owed</div>
+      </div>
+    </div>
+
+    <div class="card flat" id="debtClearCard" style="display:none">
+      <div class="fresh">Nothing owed this week ✅</div>
+    </div>
+
+    <div class="card flat">
+      <div style="padding:16px 16px 0"><div class="title">Debts</div></div>
+      <div id="debtList"></div>
+      <div style="padding:12px 16px 16px">
+        <button class="btn ghost" id="btnAddDebt">➕ Add debt</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="nav">
   <button class="on" id="navPlan"><span class="i">🏠</span>Plan</button>
   <button id="navLog"><span class="i">🧾</span>Log</button>
+  <button id="navDebts"><span class="i">💳</span>Debts</button>
 </div>
 
 <div class="modal" id="modalDeposit">
   <div class="sheet">
-    <h2 id="depTitle">➕ Add a deposit</h2>
+    <h2>➕ Add a deposit</h2>
     <div class="fld">
       <label>Amount</label>
       <input type="number" id="depAmt" inputmode="decimal" placeholder="0.00">
@@ -344,8 +397,8 @@
   <div class="sheet">
     <h2 id="billTitle">➕ Add a bill</h2>
     <div class="fld">
-      <label>Name (emojis OK)</label>
-      <input type="text" id="billName" placeholder="🎮 PlayStation+">
+      <label>Name</label>
+      <input type="text" id="billName" placeholder="PlayStation+">
     </div>
     <div class="f2">
       <div class="fld">
@@ -358,15 +411,57 @@
       </div>
     </div>
     <button class="btn" id="billSave">Save bill</button>
-    <button class="danger" id="billDelete" style="display:none">🗑️ Delete bill</button>
+    <button class="btn danger" id="billDelete" style="display:none">🗑️ Delete bill</button>
     <button class="btn ghost" id="billCancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="modalQuick">
+  <div class="sheet">
+    <h2 id="quickTitle">⭐ Pin a quick button</h2>
+    <div class="fld">
+      <label>Name</label>
+      <input type="text" id="quickName" placeholder="Coffee">
+    </div>
+    <div class="fld">
+      <label>Amount</label>
+      <input type="number" id="quickAmt" inputmode="decimal" placeholder="5">
+    </div>
+    <div class="fld">
+      <label>Category</label>
+      <select id="quickCat"></select>
+    </div>
+    <button class="btn" id="quickSave">Save</button>
+    <button class="btn danger" id="quickDelete" style="display:none">🗑️ Remove button</button>
+    <button class="btn ghost" id="quickCancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<div class="modal" id="modalDebt">
+  <div class="sheet">
+    <h2 id="debtTitle">➕ Add a debt</h2>
+    <div class="fld">
+      <label>Name</label>
+      <input type="text" id="debtName" placeholder="Afterpay">
+    </div>
+    <div class="fld">
+      <label>Amount owed</label>
+      <input type="number" id="debtAmt" inputmode="decimal" placeholder="50">
+    </div>
+    <div class="fld">
+      <label>Day of week</label>
+      <div class="daypick" id="debtDays"></div>
+    </div>
+    <button class="btn" id="debtSave">Save debt</button>
+    <button class="btn danger" id="debtDelete" style="display:none">🗑️ Delete debt</button>
+    <button class="btn ghost" id="debtCancel" style="margin-top:8px">Cancel</button>
   </div>
 </div>
 
 <div class="modal" id="modalSave">
   <div class="sheet">
     <h2>Export saved</h2>
-    <p style="font-size:14px;color:#8a8a8a;line-height:1.5;margin-bottom:12px">Want to clear the log now? Bills and deposits stay.</p>
+    <p style="font-size:14px;color:#8a8a8a;line-height:1.5;margin-bottom:12px">Want to clear the log now? Bills, deposits, and debts stay.</p>
     <div class="mrow2">
       <button class="no" id="saveNo">Keep log</button>
       <button class="yes" id="saveYes">Clear log</button>
@@ -400,7 +495,9 @@
     { id:"spf", nm:"🎵 Spotify",          amt:14, dom:14 }
   ];
 
-  var S = { log: [], paid: {}, bills: null, deposits: [] };
+  var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+  var S = { log: [], paid: {}, bills: null, deposits: [], debts: [], quick: [], lastWeek: null };
 
   function load() {
     try {
@@ -411,6 +508,9 @@
         if (d && d.paid) S.paid = d.paid;
         if (d && d.bills) S.bills = d.bills;
         if (d && d.deposits) S.deposits = d.deposits;
+        if (d && d.debts) S.debts = d.debts;
+        if (d && d.quick) S.quick = d.quick;
+        if (d && d.lastWeek) S.lastWeek = d.lastWeek;
       }
     } catch(e) {}
     if (!S.bills) S.bills = JSON.parse(JSON.stringify(DEFAULT_BILLS));
@@ -492,7 +592,6 @@
     save();
     render();
   }
-
   function billsUnpaidTotal() {
     var t = 0;
     for (var i = 0; i < S.bills.length; i++) if (!isPaid(S.bills[i])) t += S.bills[i].amt;
@@ -580,6 +679,28 @@
     return billsUnpaidTotal() / WEEKS_PER_MONTH;
   }
 
+  /* ---------- debts ---------- */
+  function debtOwes(d) {
+    return d.amt * (1 + (d.skips || 0));
+  }
+  function totalOwed() {
+    var t = 0;
+    for (var i = 0; i < S.debts.length; i++) t += debtOwes(S.debts[i]);
+    return t;
+  }
+  function debtDueToday(d) {
+    return today().getDay() === d.day;
+  }
+
+  /* ---------- fresh week check ---------- */
+  function checkFreshWeek() {
+    var ws = weekStart();
+    var key = ws.getFullYear() + "-" + pad2(ws.getMonth()+1) + "-" + pad2(ws.getDate());
+    if (S.lastWeek === null) { S.lastWeek = key; return false; }
+    if (S.lastWeek !== key) { S.lastWeek = key; save(); return true; }
+    return false;
+  }
+
   /* ---------- toast ---------- */
   var toastTimer = null;
   function toast(msg) {
@@ -594,7 +715,6 @@
   function render() {
     var wl = weekLeft();
 
-    /* header — always week-based now */
     var hdrNum = document.getElementById("hdrNum");
     var hdrLab = document.getElementById("hdrLab");
     hdrNum.textContent = money(wl);
@@ -619,7 +739,7 @@
       ? "🎉 All bills paid this month — nothing set aside."
       : money(unpaid) + " of bills still unpaid. " + money(weekSlice()) + "/week is set aside.";
 
-    /* week grid (Mon-Sun) */
+    /* week grid (Mon-Sun) — today is GREEN */
     var grid = document.getElementById("grid");
     grid.innerHTML = "";
     var names = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
@@ -649,7 +769,6 @@
       grid.appendChild(cell);
     }
 
-    /* bills due in next 7 days */
     var nTime = new Date().setHours(0,0,0,0);
     var wkEnd = addDays(weekStart(), 7).getTime();
     var dueSoon = 0;
@@ -666,7 +785,6 @@
       ? "⏳ " + dueSoon + " bill(s) due in the next 7 days — check the Month tab."
       : "✅ No bills due this week.";
 
-    /* deposits this week */
     var dl = document.getElementById("depositList");
     dl.innerHTML = "";
     var dlist = depositsWeekList();
@@ -678,7 +796,6 @@
       }
     }
 
-    /* spent this week */
     var wsl = document.getElementById("weekSpentList");
     wsl.innerHTML = "";
     var weekEntries = [];
@@ -693,36 +810,32 @@
     }
 
     /* ---- MONTH ---- */
-    document.getElementById("paydayTitle").textContent = monthName(today());
+    document.getElementById("paydayTitle").textContent = monthName(today()) + " — Paydays";
 
-    /* bills */
     var bl = document.getElementById("billList");
     bl.innerHTML = "";
     var sortedBills = S.bills.slice().sort(function(a,b){ return a.dom - b.dom; });
     for (var s = 0; s < sortedBills.length; s++) {
       var bill = sortedBills[s];
+      var paid = isPaid(bill);
       var row = document.createElement("div");
-      row.className = "row";
-
+      row.className = "row" + (paid ? " faded" : "");
       var chk = document.createElement("button");
-      chk.className = "check" + (isPaid(bill) ? " on" : "");
+      chk.className = "check" + (paid ? " on" : "");
       chk.textContent = "✓";
       (function(id){
         chk.onclick = function(ev){ ev.stopPropagation(); togglePaid(id); };
       })(bill.id);
-
       var nm = document.createElement("div");
       nm.className = "nm";
       nm.textContent = bill.nm;
       var sub = document.createElement("div");
       sub.className = "sub";
-      sub.textContent = (isPaid(bill) ? "paid · " : "due ") + "the " + bill.dom + "th";
+      sub.textContent = (paid ? "paid · " : "due ") + "the " + bill.dom + "th";
       nm.appendChild(sub);
-
       var amt = document.createElement("div");
-      amt.className = "amt" + (isPaid(bill) ? " paid" : "");
+      amt.className = "amt" + (paid ? " paid" : "");
       amt.textContent = money(bill.amt);
-
       row.appendChild(chk);
       row.appendChild(nm);
       row.appendChild(amt);
@@ -730,11 +843,9 @@
         row.style.cursor = "pointer";
         row.onclick = function(){ openBillEdit(b); };
       })(bill);
-
       bl.appendChild(row);
     }
 
-    /* paydays — dates only, no dollar totals */
     var pl = document.getElementById("paydayList");
     pl.innerHTML = "";
     var allPay = paydaysInMonth();
@@ -743,20 +854,18 @@
       var fri = allPay[p];
       var got = fri.getTime() <= nowTime;
       var prow = document.createElement("div");
-      prow.className = "row";
+      prow.className = "row" + (got ? " faded" : "");
       var pic = document.createElement("div");
       pic.style.cssText = "font-size:18px";
       pic.textContent = got ? "✅" : "·";
       var pnm = document.createElement("div");
       pnm.className = "nm";
       pnm.textContent = "Fri, " + shortDate(fri);
-      pnm.style.color = got ? "#8a8a8a" : "#f2f2f2";
       prow.appendChild(pic);
       prow.appendChild(pnm);
       pl.appendChild(prow);
     }
 
-    /* spent this month */
     var msl = document.getElementById("monthSpentList");
     msl.innerHTML = "";
     var monthEntries = [];
@@ -769,7 +878,6 @@
     }
     document.getElementById("monthSpentTotal").textContent = money(spentMonth());
 
-    /* deposits this month */
     var mdl = document.getElementById("monthDepositsList");
     mdl.innerHTML = "";
     var mDeps = depositsMonthList();
@@ -802,13 +910,96 @@
       for (var lq2 = 0; lq2 < monthEntries.length; lq2++) lml.appendChild(makeSpendRow(monthEntries[lq2], true));
     }
     document.getElementById("logMonthTotal").textContent = money(spentMonth());
+
+    /* quick buttons */
+    renderQuick();
+
+    /* ---- DEBTS ---- */
+    var dt = document.getElementById("debtTotal");
+    var tot = totalOwed();
+    dt.textContent = money(tot);
+    dt.className = "bignum " + (tot === 0 ? "green" : (tot < 50 ? "amber" : "red"));
+
+    var clearCard = document.getElementById("debtClearCard");
+    clearCard.style.display = (S.debts.length === 0) ? "block" : "none";
+
+    var dlistEl = document.getElementById("debtList");
+    dlistEl.innerHTML = "";
+    if (S.debts.length === 0) {
+      dlistEl.innerHTML = '<div class="empty">No debts tracked.</div>';
+    } else {
+      var sortedDebts = S.debts.slice().sort(function(a,b){ return a.day - b.day; });
+      for (var s2 = 0; s2 < sortedDebts.length; s2++) {
+        var debt = sortedDebts[s2];
+        var dr = document.createElement("div");
+        dr.className = "row" + (debtDueToday(debt) ? "" : " faded");
+        var dchk = document.createElement("button");
+        dchk.className = "check";
+        dchk.textContent = "✓";
+        (function(id){
+          dchk.onclick = function(ev){ ev.stopPropagation(); payDebt(id); };
+        })(debt.id);
+        var dnm = document.createElement("div");
+        dnm.className = "nm";
+        dnm.textContent = debt.nm;
+        var dsub = document.createElement("div");
+        dsub.className = "sub";
+        dsub.textContent = DAYS[debt.day] + "s" + (debt.skips ? " · skipped " + debt.skips + "×" : "");
+        dnm.appendChild(dsub);
+        var damt = document.createElement("div");
+        damt.className = "amt";
+        damt.textContent = money(debtOwes(debt));
+        var dskip = document.createElement("button");
+        dskip.className = "del";
+        dskip.textContent = "⏭";
+        dskip.style.fontSize = "17px";
+        (function(id){
+          dskip.onclick = function(ev){ ev.stopPropagation(); skipDebt(id); };
+        })(debt.id);
+        dr.appendChild(dchk);
+        dr.appendChild(dnm);
+        dr.appendChild(damt);
+        dr.appendChild(dskip);
+        (function(dd){
+          dr.style.cursor = "pointer";
+          dr.onclick = function(){ openDebtEdit(dd); };
+        })(debt);
+        dlistEl.appendChild(dr);
+      }
+    }
+  }
+
+  function renderQuick() {
+    var wrap = document.getElementById("quickWrap");
+    var row = document.getElementById("quickRow");
+    row.innerHTML = "";
+    if (S.quick.length === 0) {
+      wrap.style.display = "none";
+      return;
+    }
+    wrap.style.display = "block";
+    for (var i = 0; i < S.quick.length; i++) {
+      var q = S.quick[i];
+      var b = document.createElement("button");
+      b.className = "quick-btn";
+      b.innerHTML = q.name + ' <span class="qd">' + money(q.amt) + '</span>';
+      (function(item){
+        b.onclick = function(){ logQuick(item); };
+        var holdT = null;
+        b.addEventListener("mousedown", function(){ holdT = setTimeout(function(){ openQuickEdit(item); }, 550); });
+        b.addEventListener("mouseup", function(){ clearTimeout(holdT); });
+        b.addEventListener("mouseleave", function(){ clearTimeout(holdT); });
+        b.addEventListener("touchstart", function(){ holdT = setTimeout(function(){ openQuickEdit(item); }, 550); });
+        b.addEventListener("touchend", function(){ clearTimeout(holdT); });
+      })(q);
+      row.appendChild(b);
+    }
   }
 
   function makeSpendRow(entry, withDelete) {
     var cat = null;
     for (var i = 0; i < CATS.length; i++) if (CATS[i].id === entry.cat) cat = CATS[i];
     if (!cat) cat = CATS[4];
-
     var row = document.createElement("div");
     row.className = "item";
     var ic = document.createElement("div");
@@ -900,6 +1091,17 @@
     toast("Removed");
   }
 
+  function logQuick(item) {
+    var entry = {
+      id: "e" + (new Date().getTime()) + Math.floor(Math.random() * 10000),
+      amt: item.amt, cat: item.cat, note: item.name, ts: new Date().getTime()
+    };
+    S.log.push(entry);
+    save();
+    render();
+    toast("Logged " + money(item.amt) + " · " + item.name);
+  }
+
   function addDeposit() {
     var amt = parseFloat(document.getElementById("depAmt").value);
     if (!amt || amt <= 0) { toast("Enter an amount"); return; }
@@ -975,6 +1177,163 @@
     toast("Bill deleted");
   }
 
+  /* ---------- quick buttons ---------- */
+  var editingQuick = null;
+  function buildQuickCatSelect() {
+    var sel = document.getElementById("quickCat");
+    sel.innerHTML = "";
+    for (var i = 0; i < CATS.length; i++) {
+      var o = document.createElement("option");
+      o.value = CATS[i].id;
+      o.textContent = CATS[i].ic + " " + CATS[i].nm;
+      sel.appendChild(o);
+    }
+  }
+  function openQuickAdd() {
+    editingQuick = null;
+    document.getElementById("quickTitle").textContent = "⭐ Pin a quick button";
+    document.getElementById("quickName").value = "";
+    document.getElementById("quickAmt").value = "";
+    document.getElementById("quickCat").value = "food";
+    document.getElementById("quickDelete").style.display = "none";
+    openModal("modalQuick");
+  }
+  function openQuickEdit(item) {
+    editingQuick = item;
+    document.getElementById("quickTitle").textContent = "Edit quick button";
+    document.getElementById("quickName").value = item.name;
+    document.getElementById("quickAmt").value = item.amt;
+    document.getElementById("quickCat").value = item.cat;
+    document.getElementById("quickDelete").style.display = "block";
+    openModal("modalQuick");
+  }
+  function saveQuick() {
+    var nm = document.getElementById("quickName").value.replace(/^\s+|\s+$/g, "");
+    var amt = parseFloat(document.getElementById("quickAmt").value);
+    var cat = document.getElementById("quickCat").value;
+    if (!nm) { toast("Enter a name"); return; }
+    if (!amt || amt <= 0) { toast("Enter an amount"); return; }
+    amt = Math.round(amt * 100) / 100;
+    if (editingQuick) {
+      editingQuick.name = nm;
+      editingQuick.amt = amt;
+      editingQuick.cat = cat;
+      toast("Updated");
+    } else {
+      if (S.quick.length >= 4) { toast("Max 4 quick buttons"); return; }
+      S.quick.push({
+        id: "q" + (new Date().getTime()) + Math.floor(Math.random() * 10000),
+        name: nm, amt: amt, cat: cat
+      });
+      toast("Pinned");
+    }
+    save();
+    render();
+    closeModal("modalQuick");
+  }
+  function deleteQuick() {
+    if (!editingQuick) return;
+    var out = [];
+    for (var i = 0; i < S.quick.length; i++) if (S.quick[i].id !== editingQuick.id) out.push(S.quick[i]);
+    S.quick = out;
+    save();
+    render();
+    closeModal("modalQuick");
+    toast("Removed");
+  }
+
+  /* ---------- debts add/edit ---------- */
+  var editingDebt = null;
+  var pickedDay = 1;
+  function buildDayPicker() {
+    var el = document.getElementById("debtDays");
+    el.innerHTML = "";
+    for (var i = 0; i < 7; i++) {
+      var b = document.createElement("button");
+      b.textContent = DAYS[i];
+      b.className = (i === pickedDay ? "on" : "");
+      (function(d){
+        b.onclick = function(){ pickedDay = d; buildDayPicker(); };
+      })(i);
+      el.appendChild(b);
+    }
+  }
+  function openDebtAdd() {
+    editingDebt = null;
+    pickedDay = today().getDay();
+    document.getElementById("debtTitle").textContent = "➕ Add a debt";
+    document.getElementById("debtName").value = "";
+    document.getElementById("debtAmt").value = "";
+    document.getElementById("debtDelete").style.display = "none";
+    buildDayPicker();
+    openModal("modalDebt");
+  }
+  function openDebtEdit(d) {
+    editingDebt = d;
+    pickedDay = d.day;
+    document.getElementById("debtTitle").textContent = "Edit debt";
+    document.getElementById("debtName").value = d.nm;
+    document.getElementById("debtAmt").value = d.amt;
+    document.getElementById("debtDelete").style.display = "block";
+    buildDayPicker();
+    openModal("modalDebt");
+  }
+  function saveDebt() {
+    var nm = document.getElementById("debtName").value.replace(/^\s+|\s+$/g, "");
+    var amt = parseFloat(document.getElementById("debtAmt").value);
+    if (!nm) { toast("Enter a name"); return; }
+    if (!amt || amt <= 0) { toast("Enter an amount"); return; }
+    amt = Math.round(amt * 100) / 100;
+    if (editingDebt) {
+      editingDebt.nm = nm;
+      editingDebt.amt = amt;
+      editingDebt.day = pickedDay;
+      toast("Debt updated");
+    } else {
+      S.debts.push({
+        id: "x" + (new Date().getTime()) + Math.floor(Math.random() * 10000),
+        nm: nm, amt: amt, day: pickedDay, skips: 0
+      });
+      toast("Debt added");
+    }
+    save();
+    render();
+    closeModal("modalDebt");
+  }
+  function deleteDebt() {
+    if (!editingDebt) return;
+    var out = [];
+    for (var i = 0; i < S.debts.length; i++) if (S.debts[i].id !== editingDebt.id) out.push(S.debts[i]);
+    S.debts = out;
+    save();
+    render();
+    closeModal("modalDebt");
+    toast("Debt deleted");
+  }
+  function payDebt(id) {
+    var out = [];
+    var name = "";
+    for (var i = 0; i < S.debts.length; i++) {
+      if (S.debts[i].id === id) { name = S.debts[i].nm; }
+      else out.push(S.debts[i]);
+    }
+    S.debts = out;
+    save();
+    render();
+    toast(name + " paid ✅");
+  }
+  function skipDebt(id) {
+    for (var i = 0; i < S.debts.length; i++) {
+      if (S.debts[i].id === id) {
+        S.debts[i].skips = (S.debts[i].skips || 0) + 1;
+        toast(S.debts[i].nm + " skipped — moves to next week");
+        break;
+      }
+    }
+    save();
+    render();
+  }
+
   /* ---------- export ---------- */
   function buildExportText() {
     var now = today();
@@ -991,7 +1350,6 @@
       if (!byMonth[key]) byMonth[key] = [];
       byMonth[key].push(e);
     }
-
     var keys = [];
     for (var k in byMonth) if (byMonth.hasOwnProperty(k)) keys.push(k);
     keys.sort();
@@ -1008,7 +1366,6 @@
     lines.push("Bills paid:    " + paidCount + " of " + S.bills.length);
     lines.push("");
     lines.push("--- Bills ---");
-
     var sortedBills = S.bills.slice().sort(function(a,b){ return a.dom - b.dom; });
     for (var b = 0; b < sortedBills.length; b++) {
       var bill = sortedBills[b];
@@ -1019,16 +1376,27 @@
     }
     lines.push("");
 
+    if (S.debts.length) {
+      lines.push("--- Debts ---");
+      for (var dd2 = 0; dd2 < S.debts.length; dd2++) {
+        var dep = S.debts[dd2];
+        var dname = dep.nm;
+        while (dname.length < 24) dname += " ";
+        lines.push(dname + money(debtOwes(dep)) + "   (" + DAYS[dep.day] + "s)");
+      }
+      lines.push("");
+    }
+
     var mDeps = depositsMonthList();
     if (mDeps.length) {
       lines.push("--- Deposits ---");
       for (var dq = 0; dq < mDeps.length; dq++) {
-        var dep = mDeps[dq];
-        var ddate = new Date(dep.ts);
+        var dEntry = mDeps[dq];
+        var ddate = new Date(dEntry.ts);
         var dline = shortDate(ddate) + "  Deposit";
         while (dline.length < 24) dline += " ";
-        dline += "+" + money(dep.amt);
-        if (dep.note) dline += "   " + dep.note;
+        dline += "+" + money(dEntry.amt);
+        if (dEntry.note) dline += "   " + dEntry.note;
         lines.push(dline);
       }
       lines.push("");
@@ -1095,7 +1463,6 @@
     var text = buildExportText();
     var now = today();
     var fname = "budget-export-" + now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate()) + ".txt";
-
     try {
       var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
       var url = URL.createObjectURL(blob);
@@ -1146,22 +1513,16 @@
   }
 
   /* ---------- tabs ---------- */
-  function showPlan() {
-    document.getElementById("navPlan").classList.add("on");
-    document.getElementById("navLog").classList.remove("on");
-    document.getElementById("view-plan").classList.add("on");
-    document.getElementById("view-log").classList.remove("on");
+  function setTab(id) {
+    document.querySelectorAll("nav button").forEach(function(x){ x.classList.remove("on"); });
+    document.querySelectorAll(".view").forEach(function(x){ x.classList.remove("on"); });
+    document.getElementById(id).classList.add("on");
+    var view = id === "navPlan" ? "view-plan" : id === "navLog" ? "view-log" : "view-debts";
+    document.getElementById(view).classList.add("on");
     render();
     window.scrollTo(0,0);
   }
-  function showLog() {
-    document.getElementById("navLog").classList.add("on");
-    document.getElementById("navPlan").classList.remove("on");
-    document.getElementById("view-log").classList.add("on");
-    document.getElementById("view-plan").classList.remove("on");
-    render();
-    window.scrollTo(0,0);
-  }
+
   function showWeek() {
     document.getElementById("tabWeek").classList.add("on");
     document.getElementById("tabMonth").classList.remove("on");
@@ -1181,9 +1542,20 @@
   function init() {
     load();
     buildChips();
+    buildQuickCatSelect();
+    buildDayPicker();
 
-    document.getElementById("navPlan").onclick = showPlan;
-    document.getElementById("navLog").onclick = showLog;
+    var fresh = checkFreshWeek();
+    if (fresh) {
+      document.getElementById("freshCard").style.display = "block";
+      setTimeout(function(){
+        document.getElementById("freshCard").style.display = "none";
+      }, 6000);
+    }
+
+    document.getElementById("navPlan").onclick = function(){ setTab("navPlan"); };
+    document.getElementById("navLog").onclick = function(){ setTab("navLog"); };
+    document.getElementById("navDebts").onclick = function(){ setTab("navDebts"); };
     document.getElementById("tabWeek").onclick = showWeek;
     document.getElementById("tabMonth").onclick = showMonth;
     document.getElementById("btnAdd").onclick = addEntry;
@@ -1200,12 +1572,22 @@
     document.getElementById("billSave").onclick = saveBill;
     document.getElementById("billDelete").onclick = deleteBill;
     document.getElementById("billCancel").onclick = function(){ closeModal("modalBill"); };
+    document.getElementById("btnQuickAdd").onclick = openQuickAdd;
+    document.getElementById("quickSave").onclick = saveQuick;
+    document.getElementById("quickDelete").onclick = deleteQuick;
+    document.getElementById("quickCancel").onclick = function(){ closeModal("modalQuick"); };
+    document.getElementById("btnAddDebt").onclick = openDebtAdd;
+    document.getElementById("debtSave").onclick = saveDebt;
+    document.getElementById("debtDelete").onclick = deleteDebt;
+    document.getElementById("debtCancel").onclick = function(){ closeModal("modalDebt"); };
     document.getElementById("btnSave").onclick = exportLog;
     document.getElementById("saveYes").onclick = clearLog;
     document.getElementById("saveNo").onclick = function(){ closeModal("modalSave"); };
 
     document.getElementById("modalDeposit").onclick = function(e){ if (e.target.id === "modalDeposit") closeModal("modalDeposit"); };
     document.getElementById("modalBill").onclick = function(e){ if (e.target.id === "modalBill") closeModal("modalBill"); };
+    document.getElementById("modalQuick").onclick = function(e){ if (e.target.id === "modalQuick") closeModal("modalQuick"); };
+    document.getElementById("modalDebt").onclick = function(e){ if (e.target.id === "modalDebt") closeModal("modalDebt"); };
     document.getElementById("modalSave").onclick = function(e){ if (e.target.id === "modalSave") closeModal("modalSave"); };
 
     render();
