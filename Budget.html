@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d0d0d">
-<title>Budget v2.1</title>
+<title>Budget v2.3</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     background:#0d0d0d; color:#f2f2f2; min-height:100vh;
-    padding-bottom:90px; -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(110px + env(safe-area-inset-bottom, 0px));
+    -webkit-font-smoothing:antialiased;
   }
   .wrap { max-width:520px; margin:0 auto; padding:0 14px; }
 
@@ -55,6 +56,15 @@
   .row .amt { font-size:15px; font-weight:700; }
   .row .amt.paid { color:#5c5c5c; text-decoration:line-through; font-weight:500; }
 
+  .check {
+    width:26px; height:26px; border-radius:8px; border:2px solid #3a3a3a;
+    background:transparent; cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; color:transparent; font-family:inherit;
+    transition:all .15s;
+  }
+  .check.on { background:#3ecf8e; border-color:#3ecf8e; color:#0d0d0d; }
+
   .mline { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #2e2e2e; }
   .mline:last-child { border-bottom:none; }
   .mline .k { font-size:14px; color:#8a8a8a; }
@@ -87,6 +97,9 @@
   }
   .btn:active { opacity:.85; }
   .btn.ghost { background:#222; border:1px solid #2e2e2e; color:#f2f2f2; font-size:14px; padding:12px; }
+  .btn.half { flex:1; }
+
+  .btn-row { display:flex; gap:10px; margin-bottom:12px; }
 
   input {
     width:100%; background:#222; border:1px solid #2e2e2e; border-radius:10px;
@@ -110,6 +123,7 @@
   .item .t1 { font-size:14px; font-weight:500; }
   .item .t2 { font-size:11px; color:#8a8a8a; margin-top:1px; }
   .item .val { font-size:15px; font-weight:700; }
+  .item .val.in { color:#3ecf8e; }
   .item .del { background:none; border:none; color:#5c5c5c; font-size:20px; cursor:pointer; padding:0 4px; font-family:inherit; }
 
   .empty { text-align:center; padding:36px 20px; color:#5c5c5c; font-size:13px; line-height:1.6; }
@@ -117,6 +131,7 @@
   .nav {
     position:fixed; bottom:0; left:0; right:0; background:rgba(13,13,13,.96);
     border-top:1px solid #2e2e2e; display:flex; padding-bottom:env(safe-area-inset-bottom,0);
+    z-index:50;
   }
   .nav button {
     flex:1; background:none; border:none; color:#5c5c5c; font-family:inherit;
@@ -130,21 +145,55 @@
   .view.on { display:block; }
 
   .toast {
-    position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px);
+    position:fixed; bottom:120px; left:50%; transform:translateX(-50%) translateY(20px);
     background:#4d6bfe; color:#fff; padding:12px 22px; border-radius:22px;
     font-size:14px; font-weight:600; opacity:0; pointer-events:none;
     transition:all .25s; z-index:200; white-space:nowrap;
+    max-width:90vw; overflow:hidden; text-overflow:ellipsis;
   }
   .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
 
   .tip { font-size:11.5px; color:#5c5c5c; line-height:1.55; margin-top:10px; }
+
+  /* MODAL */
+  .modal {
+    position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .modal.on { display:flex; }
+  .sheet {
+    background:#1a1a1a; border:1px solid #2e2e2e; border-radius:20px 20px 0 0;
+    padding:22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    width:100%; max-width:520px;
+    animation:slideUp .2s ease-out;
+    max-height:85vh; overflow-y:auto;
+  }
+  @keyframes slideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  .sheet h2 { font-size:18px; font-weight:700; margin-bottom:16px; }
+  .sheet .fld { margin-bottom:12px; }
+  .sheet .fld label {
+    display:block; font-size:11px; font-weight:700; color:#8a8a8a;
+    text-transform:uppercase; letter-spacing:0.7px; margin-bottom:6px;
+  }
+  .sheet .f2 { display:flex; gap:10px; }
+  .sheet .f2 > * { flex:1; }
+  .sheet .btn { margin-top:8px; }
+  .sheet .danger {
+    width:100%; padding:13px; border-radius:11px; font-family:inherit;
+    font-size:14px; font-weight:700; cursor:pointer; margin-top:8px;
+    background:transparent; color:#f0564a; border:1px solid #3a2020;
+  }
+  .mrow2 { display:flex; gap:10px; margin-top:8px; }
+  .mrow2 button { flex:1; padding:13px; border-radius:11px; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; border:none; }
+  .mrow2 .yes { background:#f0564a; color:#fff; }
+  .mrow2 .no { background:#222; color:#f2f2f2; border:1px solid #2e2e2e; }
 </style>
 </head>
 <body>
 
 <div class="wrap">
   <header>
-    <div><h1>Budget<span class="ver">v2.1</span></h1></div>
+    <div><h1>Budget<span class="ver">v2.3</span></h1></div>
     <div class="hdr-right" id="hdr">
       <b class="green" id="hdrNum">$100</b><br><span id="hdrLab">left this week</span>
     </div>
@@ -177,7 +226,7 @@
 
       <div class="card">
         <div class="title">Week math</div>
-        <div class="mline"><span class="k">💵 Income</span><span class="v">$100</span></div>
+        <div class="mline"><span class="k">💵 Income</span><span class="v" id="weekIncome">$100</span></div>
         <div class="mline"><span class="k">🧾 Set aside for bills</span><span class="v blue" id="weekSetAside">$0</span></div>
         <div class="mline"><span class="k">🛒 Spent this week</span><span class="v amber" id="weekSpent">$0</span></div>
         <div class="mline big"><span class="k">✅ Left</span><span class="v green" id="weekLeft">$100</span></div>
@@ -185,11 +234,19 @@
       </div>
 
       <div class="card flat">
+        <div style="padding:16px 16px 0"><div class="title">Deposits this week</div></div>
+        <div id="depositList"></div>
+      </div>
+
+      <div class="card flat">
         <div style="padding:16px 16px 0"><div class="title">Spent this week</div></div>
         <div id="weekSpentList"></div>
       </div>
 
-      <button class="btn ghost" id="btnPaid">💵 I got paid — new week</button>
+      <div class="btn-row">
+        <button class="btn ghost half" id="btnPaid">💵 I got paid</button>
+        <button class="btn half" id="btnDeposit">➕ Deposit</button>
+      </div>
     </div>
 
     <!-- MONTH -->
@@ -205,6 +262,7 @@
         <div class="title" id="monthTitle">October 2026</div>
         <div class="mline"><span class="k">💵 Income so far</span><span class="v" id="monthIncome">$0</span></div>
         <div class="mline"><span class="k">📆 Fridays received</span><span class="v" id="monthFridays">0</span></div>
+        <div class="mline"><span class="k">➕ Deposits</span><span class="v" id="monthDeposits">$0</span></div>
         <div class="mline"><span class="k">🧾 Bills paid</span><span class="v blue" id="monthBills">$0</span></div>
         <div class="mline"><span class="k">🛒 Spent (log)</span><span class="v amber" id="monthSpent">$0</span></div>
         <div class="mline big"><span class="k">✅ Left</span><span class="v green" id="monthLeft">$0</span></div>
@@ -213,7 +271,9 @@
       <div class="card flat">
         <div style="padding:16px 16px 0"><div class="title">Bills this month</div></div>
         <div id="billList"></div>
-        <div style="padding:0 16px 16px"><div class="tip">Tap a bill to mark it paid or unpaid.</div></div>
+        <div style="padding:12px 16px 16px">
+          <button class="btn ghost" id="btnAddBill">➕ Add bill</button>
+        </div>
       </div>
 
       <div class="card flat">
@@ -253,6 +313,8 @@
       </div>
       <div id="logMonthList"></div>
     </div>
+
+    <button class="btn ghost" id="btnSave">💾 Save</button>
   </div>
 
 </div>
@@ -260,6 +322,59 @@
 <div class="nav">
   <button class="on" id="navPlan"><span class="i">🏠</span>Plan</button>
   <button id="navLog"><span class="i">🧾</span>Log</button>
+</div>
+
+<!-- MODAL: deposit -->
+<div class="modal" id="modalDeposit">
+  <div class="sheet">
+    <h2 id="depTitle">➕ Add a deposit</h2>
+    <div class="fld">
+      <label>Amount</label>
+      <input type="number" id="depAmt" inputmode="decimal" placeholder="0.00">
+    </div>
+    <div class="fld">
+      <label>Note (optional)</label>
+      <input type="text" id="depNote" placeholder="e.g. extra gig">
+    </div>
+    <button class="btn" id="depSave">Add deposit</button>
+    <button class="btn ghost" id="depCancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL: bill add/edit -->
+<div class="modal" id="modalBill">
+  <div class="sheet">
+    <h2 id="billTitle">➕ Add a bill</h2>
+    <div class="fld">
+      <label>Name (emojis OK)</label>
+      <input type="text" id="billName" placeholder="🎮 PlayStation+">
+    </div>
+    <div class="f2">
+      <div class="fld">
+        <label>Amount</label>
+        <input type="number" id="billAmt" inputmode="decimal" placeholder="22">
+      </div>
+      <div class="fld">
+        <label>Due day</label>
+        <input type="number" id="billDom" inputmode="numeric" placeholder="12" min="1" max="31">
+      </div>
+    </div>
+    <button class="btn" id="billSave">Save bill</button>
+    <button class="danger" id="billDelete" style="display:none">🗑️ Delete bill</button>
+    <button class="btn ghost" id="billCancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL: save & clear -->
+<div class="modal" id="modalSave">
+  <div class="sheet">
+    <h2>Export saved</h2>
+    <p style="font-size:14px;color:#8a8a8a;line-height:1.5;margin-bottom:12px">Want to clear the log now? Bills and deposits stay.</p>
+    <div class="mrow2">
+      <button class="no" id="saveNo">Keep log</button>
+      <button class="yes" id="saveYes">Clear log</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -280,16 +395,15 @@
     { id:"other", ic:"📦", nm:"Other" }
   ];
 
-  var BILLS = [
-    { id:"ps",  nm:"PlayStation+",     amt:22, dom:12 },
-    { id:"kmt", nm:"KonnectMD Agency", amt:25, dom:13 },
-    { id:"pat", nm:"Patreon",          amt:17, dom:11 },
-    { id:"csr", nm:"CastReader",       amt:6,  dom:12 },
-    { id:"spf", nm:"Spotify",          amt:14, dom:14 }
+  var DEFAULT_BILLS = [
+    { id:"ps",  nm:"🎮 PlayStation+",     amt:22, dom:12 },
+    { id:"kmt", nm:"🏥 KonnectMD Agency", amt:25, dom:13 },
+    { id:"pat", nm:"🎨 Patreon",          amt:17, dom:11 },
+    { id:"csr", nm:"📚 CastReader",       amt:6,  dom:12 },
+    { id:"spf", nm:"🎵 Spotify",          amt:14, dom:14 }
   ];
 
-  /* ---------- storage ---------- */
-  var S = { log: [], paid: {} };
+  var S = { log: [], paid: {}, bills: null, deposits: [] };
 
   function load() {
     try {
@@ -298,9 +412,11 @@
         var d = JSON.parse(raw);
         if (d && d.log) S.log = d.log;
         if (d && d.paid) S.paid = d.paid;
+        if (d && d.bills) S.bills = d.bills;
+        if (d && d.deposits) S.deposits = d.deposits;
       }
     } catch(e) {}
-    /* migrate old "weed" entries to "candy" */
+    if (!S.bills) S.bills = JSON.parse(JSON.stringify(DEFAULT_BILLS));
     for (var i = 0; i < S.log.length; i++) {
       if (S.log[i].cat === "weed") S.log[i].cat = "candy";
     }
@@ -309,7 +425,6 @@
     try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e) {}
   }
 
-  /* ---------- dates ---------- */
   function today() { return new Date(); }
 
   function mKey(d) {
@@ -318,12 +433,13 @@
     if (m < 10) m = "0" + m;
     return y + "-" + m;
   }
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
 
   function weekStart() {
     var d = today();
     d.setHours(0,0,0,0);
     var dow = d.getDay();
-    var back = (dow - 5 + 7) % 7;
+    var back = (dow - 1 + 7) % 7;
     d.setDate(d.getDate() - back);
     return d;
   }
@@ -368,13 +484,13 @@
     var idx = -1;
     for (var i = 0; i < list.length; i++) if (list[i] === id) { idx = i; break; }
     var bill = null;
-    for (var j = 0; j < BILLS.length; j++) if (BILLS[j].id === id) bill = BILLS[j];
+    for (var j = 0; j < S.bills.length; j++) if (S.bills[j].id === id) bill = S.bills[j];
     if (idx >= 0) {
       list.splice(idx, 1);
       toast((bill ? bill.nm : "Bill") + " unmarked");
     } else {
       list.push(id);
-      toast((bill ? bill.nm : "Bill") + " marked paid ✅");
+      toast((bill ? bill.nm : "Bill") + " paid ✅");
     }
     save();
     render();
@@ -382,13 +498,45 @@
 
   function billsPaidTotal() {
     var t = 0;
-    for (var i = 0; i < BILLS.length; i++) if (isPaid(BILLS[i])) t += BILLS[i].amt;
+    for (var i = 0; i < S.bills.length; i++) if (isPaid(S.bills[i])) t += S.bills[i].amt;
     return t;
   }
   function billsUnpaidTotal() {
     var t = 0;
-    for (var i = 0; i < BILLS.length; i++) if (!isPaid(BILLS[i])) t += BILLS[i].amt;
+    for (var i = 0; i < S.bills.length; i++) if (!isPaid(S.bills[i])) t += S.bills[i].amt;
     return t;
+  }
+
+  /* ---------- deposits ---------- */
+  function depositsWeek() {
+    var ws = weekStart();
+    var we = addDays(ws, 7);
+    var total = 0;
+    for (var i = 0; i < S.deposits.length; i++) {
+      var t = S.deposits[i].ts;
+      if (t >= ws.getTime() && t < we.getTime()) total += S.deposits[i].amt;
+    }
+    return total;
+  }
+  function depositsMonth() {
+    var total = 0;
+    var n = today();
+    for (var i = 0; i < S.deposits.length; i++) {
+      var d = new Date(S.deposits[i].ts);
+      if (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth()) total += S.deposits[i].amt;
+    }
+    return total;
+  }
+  function depositsWeekList() {
+    var ws = weekStart();
+    var we = addDays(ws, 7);
+    var out = [];
+    for (var i = 0; i < S.deposits.length; i++) {
+      var t = S.deposits[i].ts;
+      if (t >= ws.getTime() && t < we.getTime()) out.push(S.deposits[i]);
+    }
+    out.sort(function(a,b){ return b.ts - a.ts; });
+    return out;
   }
 
   /* ---------- fridays ---------- */
@@ -435,17 +583,22 @@
   }
 
   /* ---------- week / month totals ---------- */
+  function weekIncome() {
+    return WEEKLY + depositsWeek();
+  }
   function weekLeft() {
     var unpaid = billsUnpaidTotal();
     var slice = unpaid / WEEKS_PER_MONTH;
-    return WEEKLY - slice - spentWeek();
+    return weekIncome() - slice - spentWeek();
   }
   function weekSlice() {
     return billsUnpaidTotal() / WEEKS_PER_MONTH;
   }
+  function monthIncome() {
+    return fridaysReceived().length * WEEKLY + depositsMonth();
+  }
   function monthLeft() {
-    var received = fridaysReceived().length * WEEKLY;
-    return received - billsPaidTotal() - spentMonth();
+    return monthIncome() - billsPaidTotal() - spentMonth();
   }
 
   /* ---------- toast ---------- */
@@ -476,12 +629,13 @@
       hdrLab.textContent = "left this month";
     }
 
-    /* --- WEEK --- */
+    /* ---- WEEK ---- */
     var wn = document.getElementById("weekNum");
     wn.textContent = money(wl);
     wn.className = "bignum " + (wl < 0 ? "red" : (wl < 15 ? "amber" : "green"));
     document.getElementById("weekLab").textContent = wl < 0 ? "over budget this week" : "left this week";
 
+    document.getElementById("weekIncome").textContent = money(weekIncome());
     document.getElementById("weekSetAside").textContent = money(weekSlice());
     document.getElementById("weekSpent").textContent = money(spentWeek());
     var wlEl = document.getElementById("weekLeft");
@@ -490,13 +644,13 @@
 
     var unpaid = billsUnpaidTotal();
     document.getElementById("weekTip").textContent = unpaid === 0
-      ? "🎉 All bills paid this month — nothing set aside. Full $100 is yours."
+      ? "🎉 All bills paid this month — nothing set aside."
       : money(unpaid) + " of bills still unpaid. " + money(weekSlice()) + "/week is set aside.";
 
-    /* week grid */
+    /* week grid (Mon-Sun) */
     var grid = document.getElementById("grid");
     grid.innerHTML = "";
-    var names = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+    var names = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
     var ws = weekStart();
     var now = today();
     for (var i = 0; i < 7; i++) {
@@ -506,15 +660,15 @@
       if (d.toDateString() === now.toDateString()) cell.className = "d today";
       var dn = document.createElement("div");
       dn.className = "dn";
-      dn.textContent = names[d.getDay()];
+      dn.textContent = names[i];
       var dd = document.createElement("div");
       dd.className = "dd";
       dd.textContent = d.getDate();
       var bd = document.createElement("div");
       bd.className = "bd";
-      for (var b = 0; b < BILLS.length; b++) {
-        if (BILLS[b].dom === d.getDate()) {
-          bd.className = "bd " + (isPaid(BILLS[b]) ? "paid" : "on");
+      for (var b = 0; b < S.bills.length; b++) {
+        if (S.bills[b].dom === d.getDate()) {
+          bd.className = "bd " + (isPaid(S.bills[b]) ? "paid" : "on");
         }
       }
       cell.appendChild(dn);
@@ -522,13 +676,37 @@
       cell.appendChild(bd);
       grid.appendChild(cell);
     }
-    var dueSoon = 0;
-    for (var j = 0; j < BILLS.length; j++) if (!isPaid(BILLS[j])) dueSoon++;
-    document.getElementById("gridTip").textContent = dueSoon > 0
-      ? dueSoon + " bill(s) still to pay this month — check the Month tab."
-      : "All bills paid this month.";
 
-    /* week spent list */
+    /* bills due in next 7 days */
+    var nTime = new Date().setHours(0,0,0,0);
+    var wkEnd = addDays(weekStart(), 7).getTime();
+    var dueSoon = 0;
+    for (var b2 = 0; b2 < S.bills.length; b2++) {
+      if (!isPaid(S.bills[b2])) {
+        var y = now.getFullYear(), mo = now.getMonth();
+        var lastDay = new Date(y, mo+1, 0).getDate();
+        var dom = Math.min(S.bills[b2].dom, lastDay);
+        var dueDate = new Date(y, mo, dom).getTime();
+        if (dueDate >= nTime && dueDate < wkEnd) dueSoon++;
+      }
+    }
+    document.getElementById("gridTip").textContent = dueSoon > 0
+      ? "⏳ " + dueSoon + " bill(s) due in the next 7 days — check the Month tab."
+      : "✅ No bills due this week.";
+
+    /* deposits this week */
+    var dl = document.getElementById("depositList");
+    dl.innerHTML = "";
+    var dlist = depositsWeekList();
+    if (dlist.length === 0) {
+      dl.innerHTML = '<div class="empty">No deposits this week.</div>';
+    } else {
+      for (var di = 0; di < dlist.length; di++) {
+        dl.appendChild(makeDepositRow(dlist[di]));
+      }
+    }
+
+    /* spent this week */
     var wsl = document.getElementById("weekSpentList");
     wsl.innerHTML = "";
     var weekEntries = [];
@@ -542,7 +720,7 @@
       }
     }
 
-    /* --- MONTH --- */
+    /* ---- MONTH ---- */
     var mn = document.getElementById("monthNum");
     mn.textContent = money(ml);
     mn.className = "bignum " + (ml < 0 ? "red" : (ml < 30 ? "amber" : "green"));
@@ -550,45 +728,55 @@
 
     document.getElementById("monthTitle").textContent = monthName(today());
     var received = fridaysReceived();
-    document.getElementById("monthIncome").textContent = money(received.length * WEEKLY);
+    document.getElementById("monthIncome").textContent = money(monthIncome());
     document.getElementById("monthFridays").textContent = received.length + " × $100";
+    document.getElementById("monthDeposits").textContent = money(depositsMonth());
     document.getElementById("monthBills").textContent = money(billsPaidTotal());
     document.getElementById("monthSpent").textContent = money(spentMonth());
     var mlEl = document.getElementById("monthLeft");
     mlEl.textContent = money(ml);
     mlEl.className = "v " + (ml < 0 ? "red" : "green");
 
-    /* bill list */
+    /* bill list — checkbox + row body */
     var bl = document.getElementById("billList");
     bl.innerHTML = "";
-    var sortedBills = BILLS.slice().sort(function(a,b){ return a.dom - b.dom; });
+    var sortedBills = S.bills.slice().sort(function(a,b){ return a.dom - b.dom; });
     for (var s = 0; s < sortedBills.length; s++) {
       var bill = sortedBills[s];
       var row = document.createElement("div");
       row.className = "row";
-      row.style.cursor = "pointer";
-      var paid = isPaid(bill);
-      var icon = document.createElement("div");
-      icon.style.cssText = "font-size:18px";
-      icon.textContent = paid ? "✅" : "⏳";
+
+      var chk = document.createElement("button");
+      chk.className = "check" + (isPaid(bill) ? " on" : "");
+      chk.textContent = "✓";
+      (function(id){
+        chk.onclick = function(e){ e.stopPropagation(); togglePaid(id); };
+      })(bill.id);
+
       var nm = document.createElement("div");
       nm.className = "nm";
       nm.textContent = bill.nm;
       var sub = document.createElement("div");
       sub.className = "sub";
-      sub.textContent = paid ? "paid" : ("due the " + bill.dom + "th");
+      sub.textContent = isPaid(bill) ? "paid" : ("due the " + bill.dom + "th");
       nm.appendChild(sub);
+
       var amt = document.createElement("div");
-      amt.className = "amt" + (paid ? " paid" : "");
+      amt.className = "amt" + (isPaid(bill) ? " paid" : "");
       amt.textContent = money(bill.amt);
-      row.appendChild(icon);
+
+      row.appendChild(chk);
       row.appendChild(nm);
       row.appendChild(amt);
-      (function(id){ row.onclick = function(){ togglePaid(id); }; })(bill.id);
+      (function(b){
+        row.style.cursor = "pointer";
+        row.onclick = function(){ openBillEdit(b); };
+      })(bill);
+
       bl.appendChild(row);
     }
 
-    /* friday list */
+    /* fridays */
     var fl = document.getElementById("fridayList");
     fl.innerHTML = "";
     var allFri = fridaysInMonth();
@@ -614,7 +802,7 @@
       fl.appendChild(frow);
     }
 
-    /* --- LOG TAB --- */
+    /* ---- LOG TAB ---- */
     var lwl = document.getElementById("logWeekList");
     lwl.innerHTML = "";
     if (weekEntries.length === 0) {
@@ -644,11 +832,9 @@
 
     var row = document.createElement("div");
     row.className = "item";
-
     var ic = document.createElement("div");
     ic.className = "ic";
     ic.textContent = cat.ic;
-
     var txt = document.createElement("div");
     txt.className = "txt";
     var t1 = document.createElement("div");
@@ -660,15 +846,12 @@
     t2.textContent = cat.nm + " · " + shortDate(d);
     txt.appendChild(t1);
     txt.appendChild(t2);
-
     var val = document.createElement("div");
     val.className = "val";
     val.textContent = money(entry.amt);
-
     row.appendChild(ic);
     row.appendChild(txt);
     row.appendChild(val);
-
     if (withDelete) {
       var del = document.createElement("button");
       del.className = "del";
@@ -676,6 +859,32 @@
       del.onclick = function(){ removeEntry(entry.id); };
       row.appendChild(del);
     }
+    return row;
+  }
+
+  function makeDepositRow(dep) {
+    var row = document.createElement("div");
+    row.className = "item";
+    var ic = document.createElement("div");
+    ic.className = "ic";
+    ic.textContent = "💵";
+    var txt = document.createElement("div");
+    txt.className = "txt";
+    var t1 = document.createElement("div");
+    t1.className = "t1";
+    t1.textContent = dep.note ? dep.note : "Deposit";
+    var t2 = document.createElement("div");
+    t2.className = "t2";
+    var d = new Date(dep.ts);
+    t2.textContent = "Deposit · " + shortDate(d);
+    txt.appendChild(t1);
+    txt.appendChild(t2);
+    var val = document.createElement("div");
+    val.className = "val in";
+    val.textContent = "+" + money(dep.amt);
+    row.appendChild(ic);
+    row.appendChild(txt);
+    row.appendChild(val);
     return row;
   }
 
@@ -712,12 +921,240 @@
     toast("Removed");
   }
 
-  function newWeek() {
-    toast("New week — $100 in 💵");
+  function addDeposit() {
+    var amt = parseFloat(document.getElementById("depAmt").value);
+    if (!amt || amt <= 0) { toast("Enter an amount"); return; }
+    amt = Math.round(amt * 100) / 100;
+    var note = document.getElementById("depNote").value.replace(/^\s+|\s+$/g, "");
+    S.deposits.push({
+      id: "d" + (new Date().getTime()) + Math.floor(Math.random() * 10000),
+      amt: amt, note: note, ts: new Date().getTime()
+    });
+    save();
+    render();
+    closeModal("modalDeposit");
+    toast("Deposit +" + money(amt));
+  }
+
+  function quickPaid() {
+    toast("Got paid +$100 💵");
     render();
   }
 
-  /* ---------- category chips ---------- */
+  /* ---------- bills add/edit ---------- */
+  var editingBill = null;
+  function openBillAdd() {
+    editingBill = null;
+    document.getElementById("billTitle").textContent = "➕ Add a bill";
+    document.getElementById("billName").value = "";
+    document.getElementById("billAmt").value = "";
+    document.getElementById("billDom").value = "";
+    document.getElementById("billDelete").style.display = "none";
+    openModal("modalBill");
+  }
+  function openBillEdit(bill) {
+    editingBill = bill;
+    document.getElementById("billTitle").textContent = "Edit bill";
+    document.getElementById("billName").value = bill.nm;
+    document.getElementById("billAmt").value = bill.amt;
+    document.getElementById("billDom").value = bill.dom;
+    document.getElementById("billDelete").style.display = "block";
+    openModal("modalBill");
+  }
+  function saveBill() {
+    var nm = document.getElementById("billName").value.replace(/^\s+|\s+$/g, "");
+    var amt = parseFloat(document.getElementById("billAmt").value);
+    var dom = parseInt(document.getElementById("billDom").value, 10);
+    if (!nm) { toast("Enter a name"); return; }
+    if (!amt || amt <= 0) { toast("Enter an amount"); return; }
+    if (!dom || dom < 1 || dom > 31) { toast("Day must be 1–31"); return; }
+    amt = Math.round(amt * 100) / 100;
+    if (editingBill) {
+      editingBill.nm = nm;
+      editingBill.amt = amt;
+      editingBill.dom = dom;
+      toast("Bill updated");
+    } else {
+      S.bills.push({
+        id: "b" + (new Date().getTime()) + Math.floor(Math.random() * 10000),
+        nm: nm, amt: amt, dom: dom
+      });
+      toast("Bill added");
+    }
+    save();
+    render();
+    closeModal("modalBill");
+  }
+  function deleteBill() {
+    if (!editingBill) return;
+    var out = [];
+    for (var i = 0; i < S.bills.length; i++) if (S.bills[i].id !== editingBill.id) out.push(S.bills[i]);
+    S.bills = out;
+    save();
+    render();
+    closeModal("modalBill");
+    toast("Bill deleted");
+  }
+
+  /* ---------- export ---------- */
+  function buildExportText() {
+    var now = today();
+    var lines = [];
+    lines.push("BUDGET EXPORT");
+    lines.push(shortDate(now) + ", " + now.getFullYear());
+    lines.push("");
+
+    var byMonth = {};
+    for (var i = 0; i < S.log.length; i++) {
+      var e = S.log[i];
+      var d = new Date(e.ts);
+      var key = d.getFullYear() + "-" + pad2(d.getMonth() + 1);
+      if (!byMonth[key]) byMonth[key] = [];
+      byMonth[key].push(e);
+    }
+
+    var keys = [];
+    for (var k in byMonth) if (byMonth.hasOwnProperty(k)) keys.push(k);
+    keys.sort();
+    keys.reverse();
+
+    var curKey = now.getFullYear() + "-" + pad2(now.getMonth() + 1);
+    var received = fridaysReceived();
+    var billsPaid = billsPaidTotal();
+    var paidCount = 0;
+    for (var p = 0; p < S.bills.length; p++) if (isPaid(S.bills[p])) paidCount++;
+
+    lines.push("=== " + monthName(now).toUpperCase() + " ===");
+    lines.push("");
+    lines.push("Income:        " + money(monthIncome()) + "   (" + received.length + " Fridays + " + money(depositsMonth()) + " deposits)");
+    lines.push("Bills paid:    " + money(billsPaid) + "   (" + paidCount + " of " + S.bills.length + ")");
+    lines.push("Spent:         " + money(spentMonth()));
+    lines.push("Left:          " + money(monthLeft()));
+    lines.push("");
+    lines.push("--- Bills ---");
+
+    var sortedBills = S.bills.slice().sort(function(a,b){ return a.dom - b.dom; });
+    for (var b = 0; b < sortedBills.length; b++) {
+      var bill = sortedBills[b];
+      var mark = isPaid(bill) ? "✅" : "⏳";
+      var name = bill.nm;
+      while (name.length < 24) name += " ";
+      lines.push(mark + " " + name + money(bill.amt));
+    }
+    lines.push("");
+
+    var monthDeps = [];
+    for (var dd = 0; dd < S.deposits.length; dd++) {
+      var dt = new Date(S.deposits[dd].ts);
+      if (dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth()) monthDeps.push(S.deposits[dd]);
+    }
+    if (monthDeps.length) {
+      lines.push("--- Deposits ---");
+      monthDeps.sort(function(a,b){ return a.ts - b.ts; });
+      for (var dq = 0; dq < monthDeps.length; dq++) {
+        var dep = monthDeps[dq];
+        var ddate = new Date(dep.ts);
+        var dline = shortDate(ddate) + "  Deposit";
+        while (dline.length < 24) dline += " ";
+        dline += "+" + money(dep.amt);
+        if (dep.note) dline += "   " + dep.note;
+        lines.push(dline);
+      }
+      lines.push("");
+    }
+
+    if (byMonth[curKey] && byMonth[curKey].length) {
+      lines.push("--- Log ---");
+      var curEntries = byMonth[curKey].slice().sort(function(a,b){ return a.ts - b.ts; });
+      for (var c = 0; c < curEntries.length; c++) {
+        var ce = curEntries[c];
+        var cd = new Date(ce.ts);
+        var cCat = null;
+        for (var cc = 0; cc < CATS.length; cc++) if (CATS[cc].id === ce.cat) cCat = CATS[cc];
+        var cName = cCat ? cCat.nm : "Other";
+        var cLine = shortDate(cd) + "  " + cName;
+        while (cLine.length < 24) cLine += " ";
+        cLine += money(ce.amt);
+        if (ce.note) cLine += "   " + ce.note;
+        lines.push(cLine);
+      }
+    } else {
+      lines.push("--- Log ---");
+      lines.push("(nothing logged this month)");
+    }
+    lines.push("");
+
+    for (var m = 0; m < keys.length; m++) {
+      if (keys[m] === curKey) continue;
+      var parts = keys[m].split("-");
+      var pd = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+      lines.push("=== " + monthName(pd).toUpperCase() + " ===");
+      lines.push("");
+      var mEntries = byMonth[keys[m]].slice().sort(function(a,b){ return a.ts - b.ts; });
+      var mTotal = 0;
+      for (var n = 0; n < mEntries.length; n++) {
+        var me = mEntries[n];
+        var md = new Date(me.ts);
+        var mCat = null;
+        for (var mm = 0; mm < CATS.length; mm++) if (CATS[mm].id === me.cat) mCat = CATS[mm];
+        var mName = mCat ? mCat.nm : "Other";
+        var mLine = shortDate(md) + "  " + mName;
+        while (mLine.length < 24) mLine += " ";
+        mLine += money(me.amt);
+        if (me.note) mLine += "   " + me.note;
+        lines.push(mLine);
+        mTotal += me.amt;
+      }
+      lines.push("");
+      lines.push("Month total:   " + money(mTotal));
+      lines.push("");
+    }
+
+    var allSpent = 0;
+    for (var a2 = 0; a2 < S.log.length; a2++) allSpent += S.log[a2].amt;
+    lines.push("--- ALL TIME ---");
+    lines.push("Total spent:   " + money(allSpent));
+    lines.push("Total entries: " + S.log.length);
+    lines.push("");
+
+    return lines.join("\n");
+  }
+
+  function exportLog() {
+    var text = buildExportText();
+    var now = today();
+    var fname = "budget-export-" + now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate()) + ".txt";
+
+    try {
+      var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      toast("Saved 💾");
+      setTimeout(function(){ openModal("modalSave"); }, 700);
+    } catch(e) {
+      toast("Save failed");
+    }
+  }
+
+  function clearLog() {
+    S.log = [];
+    save();
+    render();
+    closeModal("modalSave");
+    toast("Log cleared");
+  }
+
+  /* ---------- modals ---------- */
+  function openModal(id) { document.getElementById(id).classList.add("on"); }
+  function closeModal(id) { document.getElementById(id).classList.remove("on"); }
+
+  /* ---------- chips ---------- */
   var currentCat = "food";
   function buildChips() {
     var el = document.getElementById("chips");
@@ -769,7 +1206,7 @@
     render();
   }
 
-  /* ---------- wire up ---------- */
+  /* ---------- init ---------- */
   function init() {
     load();
     buildChips();
@@ -779,7 +1216,26 @@
     document.getElementById("tabWeek").onclick = showWeek;
     document.getElementById("tabMonth").onclick = showMonth;
     document.getElementById("btnAdd").onclick = addEntry;
-    document.getElementById("btnPaid").onclick = newWeek;
+    document.getElementById("btnPaid").onclick = quickPaid;
+    document.getElementById("btnDeposit").onclick = function(){
+      document.getElementById("depAmt").value = "";
+      document.getElementById("depNote").value = "";
+      openModal("modalDeposit");
+      setTimeout(function(){ document.getElementById("depAmt").focus(); }, 150);
+    };
+    document.getElementById("depSave").onclick = addDeposit;
+    document.getElementById("depCancel").onclick = function(){ closeModal("modalDeposit"); };
+    document.getElementById("btnAddBill").onclick = openBillAdd;
+    document.getElementById("billSave").onclick = saveBill;
+    document.getElementById("billDelete").onclick = deleteBill;
+    document.getElementById("billCancel").onclick = function(){ closeModal("modalBill"); };
+    document.getElementById("btnSave").onclick = exportLog;
+    document.getElementById("saveYes").onclick = clearLog;
+    document.getElementById("saveNo").onclick = function(){ closeModal("modalSave"); };
+
+    document.getElementById("modalDeposit").onclick = function(e){ if (e.target.id === "modalDeposit") closeModal("modalDeposit"); };
+    document.getElementById("modalBill").onclick = function(e){ if (e.target.id === "modalBill") closeModal("modalBill"); };
+    document.getElementById("modalSave").onclick = function(e){ if (e.target.id === "modalSave") closeModal("modalSave"); };
 
     render();
   }
@@ -793,4 +1249,3 @@
 </script>
 </body>
 </html>
-
