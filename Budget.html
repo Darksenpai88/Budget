@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d0d0d">
-<title>Budget v2.3</title>
+<title>Budget v0.0.1</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body {
@@ -155,7 +155,6 @@
 
   .tip { font-size:11.5px; color:#5c5c5c; line-height:1.55; margin-top:10px; }
 
-  /* MODAL */
   .modal {
     position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100;
     display:none; align-items:flex-end; justify-content:center;
@@ -193,7 +192,7 @@
 
 <div class="wrap">
   <header>
-    <div><h1>Budget<span class="ver">v2.3</span></h1></div>
+    <div><h1>Budget<span class="ver">v0.0.1</span></h1></div>
     <div class="hdr-right" id="hdr">
       <b class="green" id="hdrNum">$100</b><br><span id="hdrLab">left this week</span>
     </div>
@@ -251,22 +250,6 @@
 
     <!-- MONTH -->
     <div id="paneMonth" style="display:none">
-      <div class="card flat">
-        <div class="big">
-          <div class="bignum" id="monthNum">$116</div>
-          <div class="biglab" id="monthLab">left this month</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="title" id="monthTitle">October 2026</div>
-        <div class="mline"><span class="k">💵 Income so far</span><span class="v" id="monthIncome">$0</span></div>
-        <div class="mline"><span class="k">📆 Fridays received</span><span class="v" id="monthFridays">0</span></div>
-        <div class="mline"><span class="k">➕ Deposits</span><span class="v" id="monthDeposits">$0</span></div>
-        <div class="mline"><span class="k">🧾 Bills paid</span><span class="v blue" id="monthBills">$0</span></div>
-        <div class="mline"><span class="k">🛒 Spent (log)</span><span class="v amber" id="monthSpent">$0</span></div>
-        <div class="mline big"><span class="k">✅ Left</span><span class="v green" id="monthLeft">$0</span></div>
-      </div>
 
       <div class="card flat">
         <div style="padding:16px 16px 0"><div class="title">Bills this month</div></div>
@@ -277,9 +260,26 @@
       </div>
 
       <div class="card flat">
-        <div style="padding:16px 16px 0"><div class="title">Fridays this month</div></div>
-        <div id="fridayList"></div>
+        <div style="padding:16px 16px 0"><div class="title" id="paydayTitle">Paydays this month</div></div>
+        <div id="paydayList"></div>
       </div>
+
+      <div class="card flat">
+        <div style="padding:16px 16px 0;display:flex;justify-content:space-between">
+          <div class="title" style="margin:0">Spent this month</div>
+          <div style="font-size:14px;font-weight:700" id="monthSpentTotal">$0</div>
+        </div>
+        <div id="monthSpentList"></div>
+      </div>
+
+      <div class="card flat">
+        <div style="padding:16px 16px 0;display:flex;justify-content:space-between">
+          <div class="title" style="margin:0">Deposits this month</div>
+          <div style="font-size:14px;font-weight:700" id="monthDepositsTotal">$0</div>
+        </div>
+        <div id="monthDepositsList"></div>
+      </div>
+
     </div>
   </div>
 
@@ -324,7 +324,6 @@
   <button id="navLog"><span class="i">🧾</span>Log</button>
 </div>
 
-<!-- MODAL: deposit -->
 <div class="modal" id="modalDeposit">
   <div class="sheet">
     <h2 id="depTitle">➕ Add a deposit</h2>
@@ -341,7 +340,6 @@
   </div>
 </div>
 
-<!-- MODAL: bill add/edit -->
 <div class="modal" id="modalBill">
   <div class="sheet">
     <h2 id="billTitle">➕ Add a bill</h2>
@@ -365,7 +363,6 @@
   </div>
 </div>
 
-<!-- MODAL: save & clear -->
 <div class="modal" id="modalSave">
   <div class="sheet">
     <h2>Export saved</h2>
@@ -496,11 +493,6 @@
     render();
   }
 
-  function billsPaidTotal() {
-    var t = 0;
-    for (var i = 0; i < S.bills.length; i++) if (isPaid(S.bills[i])) t += S.bills[i].amt;
-    return t;
-  }
   function billsUnpaidTotal() {
     var t = 0;
     for (var i = 0; i < S.bills.length; i++) if (!isPaid(S.bills[i])) t += S.bills[i].amt;
@@ -518,14 +510,15 @@
     }
     return total;
   }
-  function depositsMonth() {
-    var total = 0;
+  function depositsMonthList() {
+    var out = [];
     var n = today();
     for (var i = 0; i < S.deposits.length; i++) {
       var d = new Date(S.deposits[i].ts);
-      if (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth()) total += S.deposits[i].amt;
+      if (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth()) out.push(S.deposits[i]);
     }
-    return total;
+    out.sort(function(a,b){ return b.ts - a.ts; });
+    return out;
   }
   function depositsWeekList() {
     var ws = weekStart();
@@ -539,8 +532,8 @@
     return out;
   }
 
-  /* ---------- fridays ---------- */
-  function fridaysInMonth() {
+  /* ---------- paydays ---------- */
+  function paydaysInMonth() {
     var d = today();
     var y = d.getFullYear(), m = d.getMonth();
     var last = new Date(y, m + 1, 0).getDate();
@@ -549,14 +542,6 @@
       var x = new Date(y, m, i);
       if (x.getDay() === 5) out.push(x);
     }
-    return out;
-  }
-  function fridaysReceived() {
-    var now = new Date();
-    now.setHours(0,0,0,0);
-    var all = fridaysInMonth();
-    var out = [];
-    for (var i = 0; i < all.length; i++) if (all[i].getTime() <= now.getTime()) out.push(all[i]);
     return out;
   }
 
@@ -582,7 +567,7 @@
     return t;
   }
 
-  /* ---------- week / month totals ---------- */
+  /* ---------- week totals ---------- */
   function weekIncome() {
     return WEEKLY + depositsWeek();
   }
@@ -593,12 +578,6 @@
   }
   function weekSlice() {
     return billsUnpaidTotal() / WEEKS_PER_MONTH;
-  }
-  function monthIncome() {
-    return fridaysReceived().length * WEEKLY + depositsMonth();
-  }
-  function monthLeft() {
-    return monthIncome() - billsPaidTotal() - spentMonth();
   }
 
   /* ---------- toast ---------- */
@@ -614,20 +593,13 @@
   /* ---------- render ---------- */
   function render() {
     var wl = weekLeft();
-    var ml = monthLeft();
-    var planIsWeek = document.getElementById("paneWeek").style.display !== "none";
 
+    /* header — always week-based now */
     var hdrNum = document.getElementById("hdrNum");
     var hdrLab = document.getElementById("hdrLab");
-    if (planIsWeek) {
-      hdrNum.textContent = money(wl);
-      hdrNum.className = wl < 0 ? "red" : (wl < 15 ? "amber" : "green");
-      hdrLab.textContent = "left this week";
-    } else {
-      hdrNum.textContent = money(ml);
-      hdrNum.className = ml < 0 ? "red" : "green";
-      hdrLab.textContent = "left this month";
-    }
+    hdrNum.textContent = money(wl);
+    hdrNum.className = wl < 0 ? "red" : (wl < 15 ? "amber" : "green");
+    hdrLab.textContent = "left this week";
 
     /* ---- WEEK ---- */
     var wn = document.getElementById("weekNum");
@@ -721,23 +693,9 @@
     }
 
     /* ---- MONTH ---- */
-    var mn = document.getElementById("monthNum");
-    mn.textContent = money(ml);
-    mn.className = "bignum " + (ml < 0 ? "red" : (ml < 30 ? "amber" : "green"));
-    document.getElementById("monthLab").textContent = ml < 0 ? "over budget this month" : "left this month";
+    document.getElementById("paydayTitle").textContent = monthName(today());
 
-    document.getElementById("monthTitle").textContent = monthName(today());
-    var received = fridaysReceived();
-    document.getElementById("monthIncome").textContent = money(monthIncome());
-    document.getElementById("monthFridays").textContent = received.length + " × $100";
-    document.getElementById("monthDeposits").textContent = money(depositsMonth());
-    document.getElementById("monthBills").textContent = money(billsPaidTotal());
-    document.getElementById("monthSpent").textContent = money(spentMonth());
-    var mlEl = document.getElementById("monthLeft");
-    mlEl.textContent = money(ml);
-    mlEl.className = "v " + (ml < 0 ? "red" : "green");
-
-    /* bill list — checkbox + row body */
+    /* bills */
     var bl = document.getElementById("billList");
     bl.innerHTML = "";
     var sortedBills = S.bills.slice().sort(function(a,b){ return a.dom - b.dom; });
@@ -750,7 +708,7 @@
       chk.className = "check" + (isPaid(bill) ? " on" : "");
       chk.textContent = "✓";
       (function(id){
-        chk.onclick = function(e){ e.stopPropagation(); togglePaid(id); };
+        chk.onclick = function(ev){ ev.stopPropagation(); togglePaid(id); };
       })(bill.id);
 
       var nm = document.createElement("div");
@@ -758,7 +716,7 @@
       nm.textContent = bill.nm;
       var sub = document.createElement("div");
       sub.className = "sub";
-      sub.textContent = isPaid(bill) ? "paid" : ("due the " + bill.dom + "th");
+      sub.textContent = (isPaid(bill) ? "paid · " : "due ") + "the " + bill.dom + "th";
       nm.appendChild(sub);
 
       var amt = document.createElement("div");
@@ -776,31 +734,55 @@
       bl.appendChild(row);
     }
 
-    /* fridays */
-    var fl = document.getElementById("fridayList");
-    fl.innerHTML = "";
-    var allFri = fridaysInMonth();
+    /* paydays — dates only, no dollar totals */
+    var pl = document.getElementById("paydayList");
+    pl.innerHTML = "";
+    var allPay = paydaysInMonth();
     var nowTime = new Date().setHours(0,0,0,0);
-    for (var f = 0; f < allFri.length; f++) {
-      var fri = allFri[f];
+    for (var p = 0; p < allPay.length; p++) {
+      var fri = allPay[p];
       var got = fri.getTime() <= nowTime;
-      var frow = document.createElement("div");
-      frow.className = "row";
-      var fic = document.createElement("div");
-      fic.style.cssText = "font-size:18px";
-      fic.textContent = got ? "💵" : "⏰";
-      var fnm = document.createElement("div");
-      fnm.className = "nm";
-      fnm.textContent = "Fri, " + shortDate(fri);
-      var fam = document.createElement("div");
-      fam.className = "amt";
-      fam.style.color = got ? "#3ecf8e" : "#5c5c5c";
-      fam.textContent = got ? "$100 in" : "$100 due";
-      frow.appendChild(fic);
-      frow.appendChild(fnm);
-      frow.appendChild(fam);
-      fl.appendChild(frow);
+      var prow = document.createElement("div");
+      prow.className = "row";
+      var pic = document.createElement("div");
+      pic.style.cssText = "font-size:18px";
+      pic.textContent = got ? "✅" : "·";
+      var pnm = document.createElement("div");
+      pnm.className = "nm";
+      pnm.textContent = "Fri, " + shortDate(fri);
+      pnm.style.color = got ? "#8a8a8a" : "#f2f2f2";
+      prow.appendChild(pic);
+      prow.appendChild(pnm);
+      pl.appendChild(prow);
     }
+
+    /* spent this month */
+    var msl = document.getElementById("monthSpentList");
+    msl.innerHTML = "";
+    var monthEntries = [];
+    for (var m2 = 0; m2 < S.log.length; m2++) if (inThisMonth(S.log[m2].ts)) monthEntries.push(S.log[m2]);
+    monthEntries.sort(function(a,b){ return b.ts - a.ts; });
+    if (monthEntries.length === 0) {
+      msl.innerHTML = '<div class="empty">Nothing spent this month.</div>';
+    } else {
+      for (var q2 = 0; q2 < monthEntries.length; q2++) msl.appendChild(makeSpendRow(monthEntries[q2], true));
+    }
+    document.getElementById("monthSpentTotal").textContent = money(spentMonth());
+
+    /* deposits this month */
+    var mdl = document.getElementById("monthDepositsList");
+    mdl.innerHTML = "";
+    var mDeps = depositsMonthList();
+    var mDepTotal = 0;
+    if (mDeps.length === 0) {
+      mdl.innerHTML = '<div class="empty">No deposits this month.</div>';
+    } else {
+      for (var dd = 0; dd < mDeps.length; dd++) {
+        mdl.appendChild(makeDepositRow(mDeps[dd]));
+        mDepTotal += mDeps[dd].amt;
+      }
+    }
+    document.getElementById("monthDepositsTotal").textContent = money(mDepTotal);
 
     /* ---- LOG TAB ---- */
     var lwl = document.getElementById("logWeekList");
@@ -808,19 +790,16 @@
     if (weekEntries.length === 0) {
       lwl.innerHTML = '<div class="empty">Nothing logged this week.</div>';
     } else {
-      for (var q = 0; q < weekEntries.length; q++) lwl.appendChild(makeSpendRow(weekEntries[q], true));
+      for (var lq = 0; lq < weekEntries.length; lq++) lwl.appendChild(makeSpendRow(weekEntries[lq], true));
     }
     document.getElementById("logWeekTotal").textContent = money(spentWeek());
 
-    var monthEntries = [];
-    for (var m2 = 0; m2 < S.log.length; m2++) if (inThisMonth(S.log[m2].ts)) monthEntries.push(S.log[m2]);
-    monthEntries.sort(function(a,b){ return b.ts - a.ts; });
     var lml = document.getElementById("logMonthList");
     lml.innerHTML = "";
     if (monthEntries.length === 0) {
       lml.innerHTML = '<div class="empty">Nothing logged this month.</div>';
     } else {
-      for (var q2 = 0; q2 < monthEntries.length; q2++) lml.appendChild(makeSpendRow(monthEntries[q2], true));
+      for (var lq2 = 0; lq2 < monthEntries.length; lq2++) lml.appendChild(makeSpendRow(monthEntries[lq2], true));
     }
     document.getElementById("logMonthTotal").textContent = money(spentMonth());
   }
@@ -1019,17 +998,14 @@
     keys.reverse();
 
     var curKey = now.getFullYear() + "-" + pad2(now.getMonth() + 1);
-    var received = fridaysReceived();
-    var billsPaid = billsPaidTotal();
     var paidCount = 0;
     for (var p = 0; p < S.bills.length; p++) if (isPaid(S.bills[p])) paidCount++;
 
     lines.push("=== " + monthName(now).toUpperCase() + " ===");
     lines.push("");
-    lines.push("Income:        " + money(monthIncome()) + "   (" + received.length + " Fridays + " + money(depositsMonth()) + " deposits)");
-    lines.push("Bills paid:    " + money(billsPaid) + "   (" + paidCount + " of " + S.bills.length + ")");
     lines.push("Spent:         " + money(spentMonth()));
-    lines.push("Left:          " + money(monthLeft()));
+    lines.push("Deposits:      " + money(depositsMonthList().reduce(function(a,b){ return a+b.amt; }, 0)));
+    lines.push("Bills paid:    " + paidCount + " of " + S.bills.length);
     lines.push("");
     lines.push("--- Bills ---");
 
@@ -1039,20 +1015,15 @@
       var mark = isPaid(bill) ? "✅" : "⏳";
       var name = bill.nm;
       while (name.length < 24) name += " ";
-      lines.push(mark + " " + name + money(bill.amt));
+      lines.push(mark + " " + name + money(bill.amt) + "   (due " + bill.dom + "th)");
     }
     lines.push("");
 
-    var monthDeps = [];
-    for (var dd = 0; dd < S.deposits.length; dd++) {
-      var dt = new Date(S.deposits[dd].ts);
-      if (dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth()) monthDeps.push(S.deposits[dd]);
-    }
-    if (monthDeps.length) {
+    var mDeps = depositsMonthList();
+    if (mDeps.length) {
       lines.push("--- Deposits ---");
-      monthDeps.sort(function(a,b){ return a.ts - b.ts; });
-      for (var dq = 0; dq < monthDeps.length; dq++) {
-        var dep = monthDeps[dq];
+      for (var dq = 0; dq < mDeps.length; dq++) {
+        var dep = mDeps[dq];
         var ddate = new Date(dep.ts);
         var dline = shortDate(ddate) + "  Deposit";
         while (dline.length < 24) dline += " ";
