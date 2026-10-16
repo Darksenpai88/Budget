@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0d0d">
+<title>Budget v2.1</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:#0d0d0d; color:#f2f2f2; min-height:100vh;
+    padding-bottom:90px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:520px; margin:0 auto; padding:0 14px; }
+
+  header {
+    padding:16px 0 12px; border-bottom:1px solid #2e2e2e; margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  h1 { font-size:19px; font-weight:700; }
+  .ver { font-size:10px; color:#5c5c5c; font-weight:600; margin-left:6px; }
+  .hdr-right { font-size:12px; color:#8a8a8a; text-align:right; line-height:1.35; }
+  .hdr-right b { font-size:15px; }
+
+  .card {
+    background:#1a1a1a; border:1px solid #2e2e2e;
+    border-radius:14px; padding:16px; margin-bottom:12px;
+  }
+  .card.flat { padding:0; overflow:hidden; }
+
+  .big { text-align:center; padding:24px 16px; }
+  .bignum { font-size:48px; font-weight:800; letter-spacing:-2px; line-height:1; }
+  .biglab { font-size:12px; color:#8a8a8a; margin-top:8px; }
+  .green { color:#3ecf8e; } .red { color:#f0564a; } .amber { color:#e0a63a; }
+  .blue { color:#4d6bfe; }
+
+  .seg { display:flex; background:#222; border-radius:10px; padding:3px; margin-bottom:14px; }
+  .seg button {
+    flex:1; background:none; border:none; color:#8a8a8a; font-family:inherit;
+    font-size:13px; font-weight:600; padding:10px; border-radius:8px; cursor:pointer;
+  }
+  .seg button.on { background:#4d6bfe; color:#fff; }
+
+  .title {
+    font-size:11px; font-weight:700; color:#8a8a8a;
+    text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;
+  }
+
+  .row { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid #2e2e2e; }
+  .row:last-child { border-bottom:none; }
+  .row .nm { flex:1; font-size:15px; }
+  .row .sub { font-size:11px; color:#8a8a8a; margin-top:2px; }
+  .row .amt { font-size:15px; font-weight:700; }
+  .row .amt.paid { color:#5c5c5c; text-decoration:line-through; font-weight:500; }
+
+  .mline { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #2e2e2e; }
+  .mline:last-child { border-bottom:none; }
+  .mline .k { font-size:14px; color:#8a8a8a; }
+  .mline .v { font-size:16px; font-weight:700; }
+  .mline.big .k { color:#f2f2f2; font-weight:600; font-size:15px; }
+  .mline.big .v { font-size:21px; }
+
+  .wk { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .wk .d { text-align:center; padding:10px 2px; border-radius:9px; background:#222; border:1px solid transparent; }
+  .wk .d .dn { font-size:9px; color:#5c5c5c; font-weight:700; }
+  .wk .d .dd { font-size:15px; font-weight:700; margin-top:3px; }
+  .wk .d.today { border-color:#4d6bfe; }
+  .wk .d.today .dd { color:#4d6bfe; }
+  .wk .d .bd { width:5px; height:5px; border-radius:50%; background:transparent; margin:4px auto 0; }
+  .wk .d .bd.on { background:#e0a63a; }
+  .wk .d .bd.paid { background:#3ecf8e; }
+
+  .chips { display:flex; flex-wrap:wrap; gap:8px; }
+  .chip {
+    padding:10px 16px; border-radius:20px; border:1px solid #2e2e2e;
+    background:#222; color:#f2f2f2; font-family:inherit; font-size:14px;
+    font-weight:600; cursor:pointer;
+  }
+  .chip.on { background:#4d6bfe; border-color:#4d6bfe; color:#fff; }
+
+  .btn {
+    width:100%; padding:16px; border-radius:12px; border:none;
+    background:#4d6bfe; color:#fff; font-family:inherit;
+    font-size:16px; font-weight:700; cursor:pointer;
+  }
+  .btn:active { opacity:.85; }
+  .btn.ghost { background:#222; border:1px solid #2e2e2e; color:#f2f2f2; font-size:14px; padding:12px; }
+
+  input {
+    width:100%; background:#222; border:1px solid #2e2e2e; border-radius:10px;
+    padding:14px; color:#f2f2f2; font-family:inherit; font-size:16px; outline:none;
+  }
+  input:focus { border-color:#4d6bfe; }
+  input::placeholder { color:#5c5c5c; }
+
+  .amtinput { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+  .amtinput .d { font-size:34px; color:#5c5c5c; font-weight:300; }
+  .amtinput input {
+    font-size:40px; font-weight:800; padding:6px 0; border:none;
+    background:none; text-align:center; letter-spacing:-1.5px;
+  }
+  .amtinput input:focus { border:none; }
+
+  .item { display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid #2e2e2e; }
+  .item:last-child { border-bottom:none; }
+  .item .ic { width:36px; height:36px; border-radius:10px; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .item .txt { flex:1; }
+  .item .t1 { font-size:14px; font-weight:500; }
+  .item .t2 { font-size:11px; color:#8a8a8a; margin-top:1px; }
+  .item .val { font-size:15px; font-weight:700; }
+  .item .del { background:none; border:none; color:#5c5c5c; font-size:20px; cursor:pointer; padding:0 4px; font-family:inherit; }
+
+  .empty { text-align:center; padding:36px 20px; color:#5c5c5c; font-size:13px; line-height:1.6; }
+
+  .nav {
+    position:fixed; bottom:0; left:0; right:0; background:rgba(13,13,13,.96);
+    border-top:1px solid #2e2e2e; display:flex; padding-bottom:env(safe-area-inset-bottom,0);
+  }
+  .nav button {
+    flex:1; background:none; border:none; color:#5c5c5c; font-family:inherit;
+    font-size:11px; font-weight:600; padding:12px 4px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+  }
+  .nav button .i { font-size:20px; }
+  .nav button.on { color:#4d6bfe; }
+
+  .view { display:none; }
+  .view.on { display:block; }
+
+  .toast {
+    position:fixed; bottom:96px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#4d6bfe; color:#fff; padding:12px 22px; border-radius:22px;
+    font-size:14px; font-weight:600; opacity:0; pointer-events:none;
+    transition:all .25s; z-index:200; white-space:nowrap;
+  }
+  .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .tip { font-size:11.5px; color:#5c5c5c; line-height:1.55; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div><h1>Budget<span class="ver">v2.1</span></h1></div>
+    <div class="hdr-right" id="hdr">
+      <b class="green" id="hdrNum">$100</b><br><span id="hdrLab">left this week</span>
+    </div>
+  </header>
+</div>
+
+<div class="wrap">
+
+  <!-- ===== PLAN ===== -->
+  <div class="view on" id="view-plan">
+    <div class="seg">
+      <button class="on" id="tabWeek">📅 Week</button>
+      <button id="tabMonth">🗓️ Month</button>
+    </div>
+
+    <!-- WEEK -->
+    <div id="paneWeek">
+      <div class="card flat">
+        <div class="big">
+          <div class="bignum green" id="weekNum">$100</div>
+          <div class="biglab" id="weekLab">left this week</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="title">This week</div>
+        <div class="wk" id="grid"></div>
+        <div class="tip" id="gridTip"></div>
+      </div>
+
+      <div class="card">
+        <div class="title">Week math</div>
+        <div class="mline"><span class="k">💵 Income</span><span class="v">$100</span></div>
+        <div class="mline"><span class="k">🧾 Set aside for bills</span><span class="v blue" id="weekSetAside">$0</span></div>
+        <div class="mline"><span class="k">🛒 Spent this week</span><span class="v amber" id="weekSpent">$0</span></div>
+        <div class="mline big"><span class="k">✅ Left</span><span class="v green" id="weekLeft">$100</span></div>
+        <div class="tip" id="weekTip"></div>
+      </div>
+
+      <div class="card flat">
+        <div style="padding:16px 16px 0"><div class="title">Spent this week</div></div>
+        <div id="weekSpentList"></div>
+      </div>
+
+      <button class="btn ghost" id="btnPaid">💵 I got paid — new week</button>
+    </div>
+
+    <!-- MONTH -->
+    <div id="paneMonth" style="display:none">
+      <div class="card flat">
+        <div class="big">
+          <div class="bignum" id="monthNum">$116</div>
+          <div class="biglab" id="monthLab">left this month</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="title" id="monthTitle">October 2026</div>
+        <div class="mline"><span class="k">💵 Income so far</span><span class="v" id="monthIncome">$0</span></div>
+        <div class="mline"><span class="k">📆 Fridays received</span><span class="v" id="monthFridays">0</span></div>
+        <div class="mline"><span class="k">🧾 Bills paid</span><span class="v blue" id="monthBills">$0</span></div>
+        <div class="mline"><span class="k">🛒 Spent (log)</span><span class="v amber" id="monthSpent">$0</span></div>
+        <div class="mline big"><span class="k">✅ Left</span><span class="v green" id="monthLeft">$0</span></div>
+      </div>
+
+      <div class="card flat">
+        <div style="padding:16px 16px 0"><div class="title">Bills this month</div></div>
+        <div id="billList"></div>
+        <div style="padding:0 16px 16px"><div class="tip">Tap a bill to mark it paid or unpaid.</div></div>
+      </div>
+
+      <div class="card flat">
+        <div style="padding:16px 16px 0"><div class="title">Fridays this month</div></div>
+        <div id="fridayList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LOG ===== -->
+  <div class="view" id="view-log">
+    <div class="card flat">
+      <div style="padding:16px"><div class="title">Log a purchase</div></div>
+      <div style="padding:0 16px 16px">
+        <div class="amtinput">
+          <span class="d">$</span>
+          <input type="number" id="amt" inputmode="decimal" placeholder="0.00">
+        </div>
+        <div class="chips" id="chips"></div>
+        <input type="text" id="note" placeholder="note (optional)" style="margin-top:12px">
+        <button class="btn" id="btnAdd" style="margin-top:12px">➕ Add to log</button>
+      </div>
+    </div>
+
+    <div class="card flat">
+      <div style="padding:16px 16px 0;display:flex;justify-content:space-between">
+        <div class="title" style="margin:0">This week</div>
+        <div style="font-size:14px;font-weight:700" id="logWeekTotal">$0</div>
+      </div>
+      <div id="logWeekList"></div>
+    </div>
+
+    <div class="card flat">
+      <div style="padding:16px 16px 0;display:flex;justify-content:space-between">
+        <div class="title" style="margin:0">This month</div>
+        <div style="font-size:14px;font-weight:700" id="logMonthTotal">$0</div>
+      </div>
+      <div id="logMonthList"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button class="on" id="navPlan"><span class="i">🏠</span>Plan</button>
+  <button id="navLog"><span class="i">🧾</span>Log</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var WEEKLY = 100;
+  var WEEKS_PER_MONTH = 4.333;
+  var STORE_KEY = "budget.v2";
+
+  var CATS = [
+    { id:"food",  ic:"🍔", nm:"Food" },
+    { id:"gas",   ic:"⛽", nm:"Gas" },
+    { id:"candy", ic:"🍭", nm:"Candy" },
+    { id:"game",  ic:"🎮", nm:"Game" },
+    { id:"other", ic:"📦", nm:"Other" }
+  ];
+
+  var BILLS = [
+    { id:"ps",  nm:"PlayStation+",     amt:22, dom:12 },
+    { id:"kmt", nm:"KonnectMD Agency", amt:25, dom:13 },
+    { id:"pat", nm:"Patreon",          amt:17, dom:11 },
+    { id:"csr", nm:"CastReader",       amt:6,  dom:12 },
+    { id:"spf", nm:"Spotify",          amt:14, dom:14 }
+  ];
+
+  /* ---------- storage ---------- */
+  var S = { log: [], paid: {} };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var d = JSON.parse(raw);
+        if (d && d.log) S.log = d.log;
+        if (d && d.paid) S.paid = d.paid;
+      }
+    } catch(e) {}
+    /* migrate old "weed" entries to "candy" */
+    for (var i = 0; i < S.log.length; i++) {
+      if (S.log[i].cat === "weed") S.log[i].cat = "candy";
+    }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e) {}
+  }
+
+  /* ---------- dates ---------- */
+  function today() { return new Date(); }
+
+  function mKey(d) {
+    var y = d.getFullYear();
+    var m = d.getMonth() + 1;
+    if (m < 10) m = "0" + m;
+    return y + "-" + m;
+  }
+
+  function weekStart() {
+    var d = today();
+    d.setHours(0,0,0,0);
+    var dow = d.getDay();
+    var back = (dow - 5 + 7) % 7;
+    d.setDate(d.getDate() - back);
+    return d;
+  }
+
+  function addDays(d, n) {
+    var x = new Date(d.getTime());
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+
+  function money(n) {
+    var neg = n < 0;
+    var v = Math.abs(n);
+    var s;
+    if (v % 1 === 0) s = "$" + v;
+    else s = "$" + v.toFixed(2);
+    return neg ? "-" + s : s;
+  }
+
+  function monthName(d) {
+    var names = ["January","February","March","April","May","June",
+                 "July","August","September","October","November","December"];
+    return names[d.getMonth()] + " " + d.getFullYear();
+  }
+
+  function shortDate(d) {
+    var names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return names[d.getMonth()] + " " + d.getDate();
+  }
+
+  /* ---------- bills ---------- */
+  function isPaid(bill) {
+    var k = mKey(today());
+    var list = S.paid[k] || [];
+    for (var i = 0; i < list.length; i++) if (list[i] === bill.id) return true;
+    return false;
+  }
+  function togglePaid(id) {
+    var k = mKey(today());
+    if (!S.paid[k]) S.paid[k] = [];
+    var list = S.paid[k];
+    var idx = -1;
+    for (var i = 0; i < list.length; i++) if (list[i] === id) { idx = i; break; }
+    var bill = null;
+    for (var j = 0; j < BILLS.length; j++) if (BILLS[j].id === id) bill = BILLS[j];
+    if (idx >= 0) {
+      list.splice(idx, 1);
+      toast((bill ? bill.nm : "Bill") + " unmarked");
+    } else {
+      list.push(id);
+      toast((bill ? bill.nm : "Bill") + " marked paid ✅");
+    }
+    save();
+    render();
+  }
+
+  function billsPaidTotal() {
+    var t = 0;
+    for (var i = 0; i < BILLS.length; i++) if (isPaid(BILLS[i])) t += BILLS[i].amt;
+    return t;
+  }
+  function billsUnpaidTotal() {
+    var t = 0;
+    for (var i = 0; i < BILLS.length; i++) if (!isPaid(BILLS[i])) t += BILLS[i].amt;
+    return t;
+  }
+
+  /* ---------- fridays ---------- */
+  function fridaysInMonth() {
+    var d = today();
+    var y = d.getFullYear(), m = d.getMonth();
+    var last = new Date(y, m + 1, 0).getDate();
+    var out = [];
+    for (var i = 1; i <= last; i++) {
+      var x = new Date(y, m, i);
+      if (x.getDay() === 5) out.push(x);
+    }
+    return out;
+  }
+  function fridaysReceived() {
+    var now = new Date();
+    now.setHours(0,0,0,0);
+    var all = fridaysInMonth();
+    var out = [];
+    for (var i = 0; i < all.length; i++) if (all[i].getTime() <= now.getTime()) out.push(all[i]);
+    return out;
+  }
+
+  /* ---------- log helpers ---------- */
+  function inThisWeek(ts) {
+    var ws = weekStart();
+    var we = addDays(ws, 7);
+    return ts >= ws.getTime() && ts < we.getTime();
+  }
+  function inThisMonth(ts) {
+    var n = today();
+    var d = new Date(ts);
+    return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
+  }
+  function spentWeek() {
+    var t = 0;
+    for (var i = 0; i < S.log.length; i++) if (inThisWeek(S.log[i].ts)) t += S.log[i].amt;
+    return t;
+  }
+  function spentMonth() {
+    var t = 0;
+    for (var i = 0; i < S.log.length; i++) if (inThisMonth(S.log[i].ts)) t += S.log[i].amt;
+    return t;
+  }
+
+  /* ---------- week / month totals ---------- */
+  function weekLeft() {
+    var unpaid = billsUnpaidTotal();
+    var slice = unpaid / WEEKS_PER_MONTH;
+    return WEEKLY - slice - spentWeek();
+  }
+  function weekSlice() {
+    return billsUnpaidTotal() / WEEKS_PER_MONTH;
+  }
+  function monthLeft() {
+    var received = fridaysReceived().length * WEEKLY;
+    return received - billsPaidTotal() - spentMonth();
+  }
+
+  /* ---------- toast ---------- */
+  var toastTimer = null;
+  function toast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("on");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("on"); }, 1800);
+  }
+
+  /* ---------- render ---------- */
+  function render() {
+    var wl = weekLeft();
+    var ml = monthLeft();
+    var planIsWeek = document.getElementById("paneWeek").style.display !== "none";
+
+    var hdrNum = document.getElementById("hdrNum");
+    var hdrLab = document.getElementById("hdrLab");
+    if (planIsWeek) {
+      hdrNum.textContent = money(wl);
+      hdrNum.className = wl < 0 ? "red" : (wl < 15 ? "amber" : "green");
+      hdrLab.textContent = "left this week";
+    } else {
+      hdrNum.textContent = money(ml);
+      hdrNum.className = ml < 0 ? "red" : "green";
+      hdrLab.textContent = "left this month";
+    }
+
+    /* --- WEEK --- */
+    var wn = document.getElementById("weekNum");
+    wn.textContent = money(wl);
+    wn.className = "bignum " + (wl < 0 ? "red" : (wl < 15 ? "amber" : "green"));
+    document.getElementById("weekLab").textContent = wl < 0 ? "over budget this week" : "left this week";
+
+    document.getElementById("weekSetAside").textContent = money(weekSlice());
+    document.getElementById("weekSpent").textContent = money(spentWeek());
+    var wlEl = document.getElementById("weekLeft");
+    wlEl.textContent = money(wl);
+    wlEl.className = "v " + (wl < 0 ? "red" : "green");
+
+    var unpaid = billsUnpaidTotal();
+    document.getElementById("weekTip").textContent = unpaid === 0
+      ? "🎉 All bills paid this month — nothing set aside. Full $100 is yours."
+      : money(unpaid) + " of bills still unpaid. " + money(weekSlice()) + "/week is set aside.";
+
+    /* week grid */
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    var names = ["SUN","MON","TUE","WED","THU","FRI","SAT"];
+    var ws = weekStart();
+    var now = today();
+    for (var i = 0; i < 7; i++) {
+      var d = addDays(ws, i);
+      var cell = document.createElement("div");
+      cell.className = "d";
+      if (d.toDateString() === now.toDateString()) cell.className = "d today";
+      var dn = document.createElement("div");
+      dn.className = "dn";
+      dn.textContent = names[d.getDay()];
+      var dd = document.createElement("div");
+      dd.className = "dd";
+      dd.textContent = d.getDate();
+      var bd = document.createElement("div");
+      bd.className = "bd";
+      for (var b = 0; b < BILLS.length; b++) {
+        if (BILLS[b].dom === d.getDate()) {
+          bd.className = "bd " + (isPaid(BILLS[b]) ? "paid" : "on");
+        }
+      }
+      cell.appendChild(dn);
+      cell.appendChild(dd);
+      cell.appendChild(bd);
+      grid.appendChild(cell);
+    }
+    var dueSoon = 0;
+    for (var j = 0; j < BILLS.length; j++) if (!isPaid(BILLS[j])) dueSoon++;
+    document.getElementById("gridTip").textContent = dueSoon > 0
+      ? dueSoon + " bill(s) still to pay this month — check the Month tab."
+      : "All bills paid this month.";
+
+    /* week spent list */
+    var wsl = document.getElementById("weekSpentList");
+    wsl.innerHTML = "";
+    var weekEntries = [];
+    for (var k = 0; k < S.log.length; k++) if (inThisWeek(S.log[k].ts)) weekEntries.push(S.log[k]);
+    weekEntries.sort(function(a,b){ return b.ts - a.ts; });
+    if (weekEntries.length === 0) {
+      wsl.innerHTML = '<div class="empty">Nothing spent this week yet.</div>';
+    } else {
+      for (var e = 0; e < weekEntries.length; e++) {
+        wsl.appendChild(makeSpendRow(weekEntries[e], false));
+      }
+    }
+
+    /* --- MONTH --- */
+    var mn = document.getElementById("monthNum");
+    mn.textContent = money(ml);
+    mn.className = "bignum " + (ml < 0 ? "red" : (ml < 30 ? "amber" : "green"));
+    document.getElementById("monthLab").textContent = ml < 0 ? "over budget this month" : "left this month";
+
+    document.getElementById("monthTitle").textContent = monthName(today());
+    var received = fridaysReceived();
+    document.getElementById("monthIncome").textContent = money(received.length * WEEKLY);
+    document.getElementById("monthFridays").textContent = received.length + " × $100";
+    document.getElementById("monthBills").textContent = money(billsPaidTotal());
+    document.getElementById("monthSpent").textContent = money(spentMonth());
+    var mlEl = document.getElementById("monthLeft");
+    mlEl.textContent = money(ml);
+    mlEl.className = "v " + (ml < 0 ? "red" : "green");
+
+    /* bill list */
+    var bl = document.getElementById("billList");
+    bl.innerHTML = "";
+    var sortedBills = BILLS.slice().sort(function(a,b){ return a.dom - b.dom; });
+    for (var s = 0; s < sortedBills.length; s++) {
+      var bill = sortedBills[s];
+      var row = document.createElement("div");
+      row.className = "row";
+      row.style.cursor = "pointer";
+      var paid = isPaid(bill);
+      var icon = document.createElement("div");
+      icon.style.cssText = "font-size:18px";
+      icon.textContent = paid ? "✅" : "⏳";
+      var nm = document.createElement("div");
+      nm.className = "nm";
+      nm.textContent = bill.nm;
+      var sub = document.createElement("div");
+      sub.className = "sub";
+      sub.textContent = paid ? "paid" : ("due the " + bill.dom + "th");
+      nm.appendChild(sub);
+      var amt = document.createElement("div");
+      amt.className = "amt" + (paid ? " paid" : "");
+      amt.textContent = money(bill.amt);
+      row.appendChild(icon);
+      row.appendChild(nm);
+      row.appendChild(amt);
+      (function(id){ row.onclick = function(){ togglePaid(id); }; })(bill.id);
+      bl.appendChild(row);
+    }
+
+    /* friday list */
+    var fl = document.getElementById("fridayList");
+    fl.innerHTML = "";
+    var allFri = fridaysInMonth();
+    var nowTime = new Date().setHours(0,0,0,0);
+    for (var f = 0; f < allFri.length; f++) {
+      var fri = allFri[f];
+      var got = fri.getTime() <= nowTime;
+      var frow = document.createElement("div");
+      frow.className = "row";
+      var fic = document.createElement("div");
+      fic.style.cssText = "font-size:18px";
+      fic.textContent = got ? "💵" : "⏰";
+      var fnm = document.createElement("div");
+      fnm.className = "nm";
+      fnm.textContent = "Fri, " + shortDate(fri);
+      var fam = document.createElement("div");
+      fam.className = "amt";
+      fam.style.color = got ? "#3ecf8e" : "#5c5c5c";
+      fam.textContent = got ? "$100 in" : "$100 due";
+      frow.appendChild(fic);
+      frow.appendChild(fnm);
+      frow.appendChild(fam);
+      fl.appendChild(frow);
+    }
+
+    /* --- LOG TAB --- */
+    var lwl = document.getElementById("logWeekList");
+    lwl.innerHTML = "";
+    if (weekEntries.length === 0) {
+      lwl.innerHTML = '<div class="empty">Nothing logged this week.</div>';
+    } else {
+      for (var q = 0; q < weekEntries.length; q++) lwl.appendChild(makeSpendRow(weekEntries[q], true));
+    }
+    document.getElementById("logWeekTotal").textContent = money(spentWeek());
+
+    var monthEntries = [];
+    for (var m2 = 0; m2 < S.log.length; m2++) if (inThisMonth(S.log[m2].ts)) monthEntries.push(S.log[m2]);
+    monthEntries.sort(function(a,b){ return b.ts - a.ts; });
+    var lml = document.getElementById("logMonthList");
+    lml.innerHTML = "";
+    if (monthEntries.length === 0) {
+      lml.innerHTML = '<div class="empty">Nothing logged this month.</div>';
+    } else {
+      for (var q2 = 0; q2 < monthEntries.length; q2++) lml.appendChild(makeSpendRow(monthEntries[q2], true));
+    }
+    document.getElementById("logMonthTotal").textContent = money(spentMonth());
+  }
+
+  function makeSpendRow(entry, withDelete) {
+    var cat = null;
+    for (var i = 0; i < CATS.length; i++) if (CATS[i].id === entry.cat) cat = CATS[i];
+    if (!cat) cat = CATS[4];
+
+    var row = document.createElement("div");
+    row.className = "item";
+
+    var ic = document.createElement("div");
+    ic.className = "ic";
+    ic.textContent = cat.ic;
+
+    var txt = document.createElement("div");
+    txt.className = "txt";
+    var t1 = document.createElement("div");
+    t1.className = "t1";
+    t1.textContent = entry.note ? entry.note : cat.nm;
+    var t2 = document.createElement("div");
+    t2.className = "t2";
+    var d = new Date(entry.ts);
+    t2.textContent = cat.nm + " · " + shortDate(d);
+    txt.appendChild(t1);
+    txt.appendChild(t2);
+
+    var val = document.createElement("div");
+    val.className = "val";
+    val.textContent = money(entry.amt);
+
+    row.appendChild(ic);
+    row.appendChild(txt);
+    row.appendChild(val);
+
+    if (withDelete) {
+      var del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.onclick = function(){ removeEntry(entry.id); };
+      row.appendChild(del);
+    }
+    return row;
+  }
+
+  /* ---------- actions ---------- */
+  function addEntry() {
+    var amtInput = document.getElementById("amt");
+    var noteInput = document.getElementById("note");
+    var a = parseFloat(amtInput.value);
+    if (!a || a <= 0) { toast("Enter an amount"); return; }
+    a = Math.round(a * 100) / 100;
+    var note = noteInput.value.replace(/^\s+|\s+$/g, "");
+    var cat = currentCat;
+    var entry = {
+      id: "e" + (new Date().getTime()) + Math.floor(Math.random() * 10000),
+      amt: a, cat: cat, note: note, ts: new Date().getTime()
+    };
+    S.log.push(entry);
+    save();
+    render();
+    var catName = "item";
+    for (var i = 0; i < CATS.length; i++) if (CATS[i].id === cat) catName = CATS[i].nm;
+    toast("Logged " + money(a) + " · " + catName);
+    amtInput.value = "";
+    noteInput.value = "";
+    amtInput.focus();
+  }
+
+  function removeEntry(id) {
+    var out = [];
+    for (var i = 0; i < S.log.length; i++) if (S.log[i].id !== id) out.push(S.log[i]);
+    S.log = out;
+    save();
+    render();
+    toast("Removed");
+  }
+
+  function newWeek() {
+    toast("New week — $100 in 💵");
+    render();
+  }
+
+  /* ---------- category chips ---------- */
+  var currentCat = "food";
+  function buildChips() {
+    var el = document.getElementById("chips");
+    el.innerHTML = "";
+    for (var i = 0; i < CATS.length; i++) {
+      var c = CATS[i];
+      var b = document.createElement("button");
+      b.className = "chip" + (c.id === currentCat ? " on" : "");
+      b.textContent = c.ic + " " + c.nm;
+      (function(catId){
+        b.onclick = function(){
+          currentCat = catId;
+          buildChips();
+        };
+      })(c.id);
+      el.appendChild(b);
+    }
+  }
+
+  /* ---------- tabs ---------- */
+  function showPlan() {
+    document.getElementById("navPlan").classList.add("on");
+    document.getElementById("navLog").classList.remove("on");
+    document.getElementById("view-plan").classList.add("on");
+    document.getElementById("view-log").classList.remove("on");
+    render();
+    window.scrollTo(0,0);
+  }
+  function showLog() {
+    document.getElementById("navLog").classList.add("on");
+    document.getElementById("navPlan").classList.remove("on");
+    document.getElementById("view-log").classList.add("on");
+    document.getElementById("view-plan").classList.remove("on");
+    render();
+    window.scrollTo(0,0);
+  }
+  function showWeek() {
+    document.getElementById("tabWeek").classList.add("on");
+    document.getElementById("tabMonth").classList.remove("on");
+    document.getElementById("paneWeek").style.display = "block";
+    document.getElementById("paneMonth").style.display = "none";
+    render();
+  }
+  function showMonth() {
+    document.getElementById("tabMonth").classList.add("on");
+    document.getElementById("tabWeek").classList.remove("on");
+    document.getElementById("paneMonth").style.display = "block";
+    document.getElementById("paneWeek").style.display = "none";
+    render();
+  }
+
+  /* ---------- wire up ---------- */
+  function init() {
+    load();
+    buildChips();
+
+    document.getElementById("navPlan").onclick = showPlan;
+    document.getElementById("navLog").onclick = showLog;
+    document.getElementById("tabWeek").onclick = showWeek;
+    document.getElementById("tabMonth").onclick = showMonth;
+    document.getElementById("btnAdd").onclick = addEntry;
+    document.getElementById("btnPaid").onclick = newWeek;
+
+    render();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
+
